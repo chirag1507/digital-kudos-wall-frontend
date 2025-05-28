@@ -1,5 +1,5 @@
 // Jest setup file for frontend tests
-// Minimal setup for now
+import "@testing-library/jest-dom";
 
 // Global test configuration
 if (typeof global !== "undefined") {
