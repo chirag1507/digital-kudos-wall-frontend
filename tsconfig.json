@@ -19,5 +19,5 @@
     "allowSyntheticDefaultImports": true,
     "types": ["jest", "node"]
   },
-  "include": ["src"]
+  "include": ["src", "jest.setup.js"]
 }

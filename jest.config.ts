@@ -10,6 +10,7 @@ const config: Config = {
     "\\.(css|less|scss|sass)$": "identity-obj-proxy",
   },
   setupFilesAfterEnv: ["<rootDir>/src/setupTests.ts"],
+  setupFiles: ["<rootDir>/jest.setup.js"],
   transform: {
     "^.+\\.(ts|tsx)$": "ts-jest",
   },

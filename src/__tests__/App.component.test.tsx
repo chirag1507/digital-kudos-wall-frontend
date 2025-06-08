@@ -5,19 +5,13 @@ import App from "../App";
 describe("App Component", () => {
   test("renders Digital Kudos Wall heading", () => {
     render(<App />);
-    const heading = screen.getByRole("heading", { name: /digital kudos wall/i });
+    const heading = screen.getByText(/digital kudos wall platform/i);
     expect(heading).toBeInTheDocument();
   });
 
-  test("renders welcome message", () => {
+  test("renders registration form by default", () => {
     render(<App />);
-    const welcomeText = screen.getByText(/welcome to the digital kudos wall/i);
-    expect(welcomeText).toBeInTheDocument();
-  });
-
-  test("renders description text", () => {
-    render(<App />);
-    const descriptionText = screen.getByText(/a place to give and receive kudos/i);
-    expect(descriptionText).toBeInTheDocument();
+    const emailField = screen.getByLabelText(/email address/i);
+    expect(emailField).toBeInTheDocument();
   });
 });

@@ -1,5 +1,5 @@
-// Placeholder test file for frontend pipeline
-describe("Placeholder Tests", () => {
+// Basic test placeholders for frontend pipeline
+describe("Basic Tests", () => {
   test("should pass basic test", () => {
     expect(1 + 1).toBe(2);
   });

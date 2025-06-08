@@ -14,10 +14,16 @@
     "lint:check": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --format=json"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^7.1.1",
+    "axios": "^1.9.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.6.2"
   },
   "devDependencies": {
+    "@pact-foundation/pact": "^15.0.1",
     "@testing-library/jest-dom": "^6.1.0",
     "@testing-library/react": "^13.4.0",
     "@types/jest": "^29.5.0",
