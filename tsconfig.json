@@ -17,7 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["jest", "node"]
+    "types": ["jest", "node", "vite/client"]
   },
   "include": ["src", "jest.setup.js"]
 }

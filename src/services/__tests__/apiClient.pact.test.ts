@@ -1,11 +1,11 @@
 import { Pact, Matchers } from "@pact-foundation/pact";
 import path from "path";
-import fetch from "cross-fetch";
+import { createApiClient } from "../apiClient"; // Corrected import path
 
 const { like } = Matchers;
 
-// Make fetch available globally for the test
-global.fetch = fetch;
+// Remove the global fetch override if your test runner supports it natively
+// global.fetch = fetch;
 
 const mockProvider = new Pact({
   consumer: "DigitalKudosWallFrontend",
@@ -16,25 +16,8 @@ const mockProvider = new Pact({
   logLevel: "info",
 });
 
-// Create a test version of the API client that uses the mock server
-const createTestApiClient = (baseUrl: string) => ({
-  registerUser: async (payload: { email: string; password: string }) => {
-    const response = await fetch(`${baseUrl}/api/v1/users/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to register user");
-    }
-
-    return response.json();
-  },
-});
+// Remove the test-only API client
+// const createTestApiClient = ...
 
 describe("API Client - User Registration Contract", () => {
   beforeAll(() => mockProvider.setup());
@@ -72,7 +55,8 @@ describe("API Client - User Registration Contract", () => {
     afterEach(() => mockProvider.verify());
 
     it("should register successfully and return user data", async () => {
-      const testApiClient = createTestApiClient("http://localhost:1234");
+      // Create a real API client instance pointed at the mock server
+      const testApiClient = createApiClient(mockProvider.mockService.baseUrl);
       const userData = {
         email: "pact-test@example.com",
         password: "ValidPassword123!",

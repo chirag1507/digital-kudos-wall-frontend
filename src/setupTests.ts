@@ -1,5 +1,7 @@
 // Jest setup file for frontend tests
 import "@testing-library/jest-dom";
+import "cross-fetch/polyfill";
+import { TextEncoder, TextDecoder } from "util";
 
 // Global test configuration
 if (typeof global !== "undefined") {
@@ -13,3 +15,6 @@ if (typeof global !== "undefined") {
     // error: jest.fn(),
   };
 }
+
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder as typeof global.TextDecoder;

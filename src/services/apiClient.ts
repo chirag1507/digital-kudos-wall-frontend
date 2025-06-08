@@ -1,11 +1,18 @@
+const API_BASE_URL = "http://localhost:3000";
+
 export interface RegisterUserPayload {
   email: string;
   password: string;
 }
 
-export const apiClient = {
-  registerUser: async (payload: RegisterUserPayload) => {
-    const response = await fetch("http://localhost:3000/api/v1/users/register", {
+export interface User {
+  id: string;
+  email: string;
+}
+
+export const createApiClient = (baseUrl: string) => ({
+  registerUser: async (payload: RegisterUserPayload): Promise<User> => {
+    const response = await fetch(`${baseUrl}/api/v1/users/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -20,4 +27,6 @@ export const apiClient = {
 
     return response.json();
   },
-};
+});
+
+export const apiClient = createApiClient(API_BASE_URL);
