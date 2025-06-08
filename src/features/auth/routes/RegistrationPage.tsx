@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { apiClient } from "../../../services/apiClient";
 import RegistrationForm from "../components/RegistrationForm";
 import { Box, Typography, Container, Card, CardContent, Divider, Link as MuiLink } from "@mui/material";
 import { useLocation } from "react-router-dom";
+import { useRegistration } from "../hooks/useRegistration";
 
 const useFormField = (initialValue: string) => {
   const [value, setValue] = useState(initialValue);
@@ -16,37 +16,20 @@ const RegistrationPage: React.FC = () => {
 
   const email = useFormField("");
   const password = useFormField("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const { error, isLoading, isSuccess, handleSubmit } = useRegistration();
+
+  const handleFormSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      if (isLoginPage) {
-        // Simulate login for now
-        setTimeout(() => {
-          setIsSuccess(true);
-          setIsLoading(false);
-        }, 1000);
-      } else {
-        await apiClient.registerUser({
-          email: email.value,
-          password: password.value,
-        });
-        setIsSuccess(true);
-      }
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred.");
-      }
-    } finally {
-      setIsLoading(false);
+    if (isLoginPage) {
+      // Simulate login for now
+      console.log("Simulating login...");
+      // In a real scenario, you'd call a login use case here.
+    } else {
+      await handleSubmit({
+        email: email.value,
+        password: password.value,
+      });
     }
   };
 
@@ -89,7 +72,7 @@ const RegistrationPage: React.FC = () => {
           <RegistrationForm
             email={email}
             password={password}
-            onSubmit={handleSubmit}
+            onSubmit={handleFormSubmit}
             isLoading={isLoading}
             error={error}
             isLoginMode={isLoginPage}

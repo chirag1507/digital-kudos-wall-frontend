@@ -50,58 +50,59 @@ All frontend code MUST be organized into one of the following four layers. The f
 
 ### Layer 2: Application Business Rules (Use Cases)
 
-- **Standard:** This is the heart of the frontend application. It contains the application-specific logic. Each file in this layer represents a single, specific use case (e.g., `registerUser.ts`).
+- **Standard:** This is the heart of the frontend application. It contains the application-specific orchestration logic. Each use case MUST be implemented as a `class` (also known as an "Interactor") to ensure a clear separation of concerns and explicit dependency injection.
 - **Content:**
-  - Plain TypeScript functions or classes.
   - MUST NOT contain any reference to React, hooks, or any UI framework.
-  - Orchestrates the flow of data between the UI and the infrastructure services.
+  - Orchestrates the flow of data required for a specific user interaction on the frontend.
   - Takes simple data types as input and returns a result.
-  - Depends on abstractions (interfaces) for services, not concrete implementations.
+  - MUST depend on abstractions (interfaces) for any external services (like an `IAuthService`), not on concrete implementations.
 - **Location:** `src/features/{feature-name}/application/`
 - **Example:**
 
   ```typescript
   // src/features/auth/application/registerUser.ts
-  import { IAuthService } from "../services/IAuthService";
-  import { RegistrationData } from "../domain/types"; // Or simple types
+  import { IAuthService, RegistrationData, User } from "../ports"; // Note: Depends on a PORT
 
-  export const makeRegisterUser = (authService: IAuthS/ervice) => {
-    return async (data: RegistrationData) => {
-      // Logic for registration, validation, etc.
-      return await authService.register(data);
-    };
-  };
+  export class RegisterUserUseCase {
+    constructor(private readonly authService: IAuthService) {}
+
+    async execute(payload: RegistrationData): Promise<User> {
+      // Application-specific logic lives here. e.g., analytics.track()
+      return this.authService.registerUser(payload);
+    }
+  }
   ```
 
 ### Layer 3: Interface Adapters (Custom Hooks)
 
 - **Standard:** This layer acts as the bridge between the application logic (Use Cases) and the UI framework (React).
 - **Content:**
-  - Custom React Hooks (e.g., `useRegistration.ts`).
-  - Manages component state (`useState`, `useReducer`), side effects (`useEffect`), and user interactions.
-  - Instantiates and calls the application Use Cases.
-  - Injects concrete service implementations into the use cases.
-  - Formats data for presentation to the UI.
+  - Custom React Hooks that manage all UI-related state (`useState`, `useReducer`), side effects (`useEffect`), and user event handling.
+  - Responsible for instantiating Use Case classes and calling their `execute` methods.
+  - Injects concrete service implementations (or other dependencies) into the use cases upon instantiation.
 - **Location:** `src/features/{feature-name}/hooks/`
 - **Dependencies:** Depends on Use Cases (inward) and React (outward framework).
 - **Example:**
 
   ```typescript
   // src/features/auth/hooks/useRegistration.ts
-  import { useState } from "react";
-  import { makeRegisterUser } from "../application/registerUser";
-  import { authService } from "../services/authService"; // Concrete implementation
-
-  const registerUser = makeRegisterUser(authService);
+  import { useState, useMemo } from "react";
+  import { RegisterUserUseCase } from "../application/registerUser";
+  import { authService } from "../services/authServiceAdapter"; // Concrete Adapter
 
   export const useRegistration = () => {
-    // State management...
+    const [error, setError] = useState<string | null>(null);
+    // ... other state ...
+
+    // Use `useMemo` to ensure the use case is instantiated only once.
+    const registerUserUseCase = useMemo(() => new RegisterUserUseCase(authService), []);
+
     const handleSubmit = async (data) => {
-      // call registerUser(data)...
+      await registerUserUseCase.execute(data);
+      // ... handle result ...
     };
-    return {
-      /* state, handlers */
-    };
+
+    return { error, handleSubmit /* ... */ };
   };
   ```
 
@@ -109,11 +110,12 @@ All frontend code MUST be organized into one of the following four layers. The f
 
 - **Standard:** This is the outermost layer, composed of the implementation details.
 - **Content:**
-  - **React Components:** "Dumb" components that receive props and render UI. They delegate all logic to the hooks. They should contain minimal logic, primarily for rendering.
-  - **Services:** Concrete implementations of infrastructure concerns. This includes API clients (`apiClient.ts`), analytics services, etc. They implement the interfaces required by the Application Layer.
+  - **React Components:** "Dumb" components that only render UI based on props. They delegate all logic and event handling to the hooks provided to them.
+  - **Service Adapters:** Concrete implementations of the port interfaces required by the Application Layer (e.g., `IAuthService`). Their job is to "adapt" the specific technology (e.g., `fetch` for a REST API, or a GraphQL client) to the needs of the application.
 - **Location:**
   - Components: `src/features/{feature-name}/components/` and `src/features/{feature-name}/routes/`
-  - Services: `src/features/{feature-name}/services/` (for feature-specific services) or `src/services/` (for shared services).
+  - Service Adapters: `src/features/{feature-name}/services/`
+  - Port Interfaces: `src/features/{feature-name}/ports/` (e.g., `IAuthService.ts`)
 
 ## 4. Directory Structure (Non-Negotiable)
 
@@ -123,11 +125,12 @@ To enforce this separation, all feature-based modules MUST follow this directory
 src/
 └── features/
     └── {feature-name}/
-        ├── application/   // Layer 2: Use Cases (e.g., registerUser.ts)
+        ├── application/   // Layer 2: Use Case classes (e.g., RegisterUserUseCase.ts)
         ├── components/    // Layer 4: Dumb React Components
         ├── hooks/         // Layer 3: Custom Hooks (e.g., useRegistration.ts)
         ├── routes/        // Layer 4: Page-level Components
-        └── services/      // Layer 4: Concrete service implementations
+        ├── services/      // Layer 4: Concrete service adapters (e.g., authServiceAdapter.ts)
+        └── ports/         // Interfaces for services required by the application layer.
 ```
 
 ## 5. Enforcement
