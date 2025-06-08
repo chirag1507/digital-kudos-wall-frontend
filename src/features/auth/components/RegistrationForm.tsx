@@ -2,7 +2,7 @@ import React from "react";
 import { TextField, Button, Box, Alert } from "@mui/material";
 
 interface RegistrationFormProps {
-  name: {
+  name?: {
     value: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   };
@@ -40,7 +40,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
         width: "100%",
       }}>
       {error && <Alert severity="error">{error}</Alert>}
-      {!isLoginMode && (
+      {!isLoginMode && name && (
         <TextField
           id="name"
           label="Full Name"

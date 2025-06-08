@@ -14,7 +14,6 @@ const RegistrationPage: React.FC = () => {
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
 
-  const name = useFormField("");
   const email = useFormField("");
   const password = useFormField("");
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +34,6 @@ const RegistrationPage: React.FC = () => {
         }, 1000);
       } else {
         await apiClient.registerUser({
-          name: name.value,
           email: email.value,
           password: password.value,
         });
@@ -61,7 +59,7 @@ const RegistrationPage: React.FC = () => {
               {isLoginPage ? "Welcome Back!" : "Registration Successful!"}
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              {isLoginPage ? `Welcome back, ${email.value}!` : `Welcome to the Digital Kudos Wall, ${name.value}!`}
+              {isLoginPage ? `Welcome back, ${email.value}!` : `Welcome to the Digital Kudos Wall, ${email.value}!`}
             </Typography>
           </CardContent>
         </Card>
@@ -89,7 +87,6 @@ const RegistrationPage: React.FC = () => {
 
         <CardContent sx={{ p: 6 }}>
           <RegistrationForm
-            name={name}
             email={email}
             password={password}
             onSubmit={handleSubmit}

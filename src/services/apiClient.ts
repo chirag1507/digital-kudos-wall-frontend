@@ -1,12 +1,11 @@
 export interface RegisterUserPayload {
-  name: string;
   email: string;
-  password?: string;
+  password: string;
 }
 
 export const apiClient = {
   registerUser: async (payload: RegisterUserPayload) => {
-    const response = await fetch("http://localhost:3000/api/users", {
+    const response = await fetch("http://localhost:3000/api/v1/users/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
