@@ -8,4 +8,12 @@ module.exports = {
   rules: {
     "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
   },
+  overrides: [
+    {
+      files: ["scripts/**/*.js"],
+      env: {
+        node: true,
+      },
+    },
+  ],
 };

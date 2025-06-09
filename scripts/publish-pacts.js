@@ -2,7 +2,7 @@ import pact from "@pact-foundation/pact";
 const { Publisher } = pact;
 import path from "path";
 import { version } from "../package.json" with { type: "json" };
-import { cwd, process } from "node:process";
+import { cwd } from "node:process";
 
 // This is the version of the consumer application that is publishing the pact.
 // It is recommended to use the git sha for this.
