@@ -39,6 +39,13 @@ jobs:
       - name: Run Contract Verification Tests
         run: npm run test:contract
 
+      - name: Publish Pact Contract
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npm run publish:pacts
+        env:
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+          PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+
       - name: Run Linting
         run: npm run lint
 
