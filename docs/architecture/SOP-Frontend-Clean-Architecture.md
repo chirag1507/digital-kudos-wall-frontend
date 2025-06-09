@@ -1,7 +1,7 @@
 # Standard Operating Procedure: Frontend Clean Architecture
 
 **Status:** Mandatory
-**Version:** 1.0
+**Version:** 2.0
 **Date:** {{CURRENT_DATE}}
 
 **NON-NEGOTIABLE STANDARD:** Adherence to this SOP is mandatory for all frontend features. Deviations are not permitted without explicit architectural review and approval. This is to ensure a scalable, maintainable, and testable codebase aligned with our long-term vision for micro-frontends and a Product Operating Model.
@@ -14,88 +14,116 @@ This SOP defines the standards for implementing a Clean Architecture in the Digi
 
 This SOP applies to all feature development within the frontend codebase.
 
-## 3. The Four Layers of Frontend Architecture
+## 3. The Layers of Frontend Architecture
 
-All frontend code MUST be organized into one of the following four layers. The fundamental rule is the **Dependency Rule**: source code dependencies can only point inwards. Nothing in an inner layer can know anything at all about something in an outer layer.
+All frontend code MUST be organized into the following layers. The fundamental rule is the **Dependency Rule**: source code dependencies can only point inwards. Nothing in an inner layer can know anything at all about something in an outer layer.
 
 ```
-+------------------------------------------------------+
-| 4. Frameworks & Drivers (React Components, API Client) |
-+------------------------------------------------------+
++-----------------------------------------------------------------------------------------+
+| 4. Frameworks & Drivers (React Components, HTTP Client)                                 |
++-----------------------------------------------------------------------------------------+
        ^
        | Dependencies
        v
-+------------------------------------------------------+
-| 3. Interface Adapters (Custom Hooks)                 |
-+------------------------------------------------------+
++-----------------------------------------------------------------------------------------+
+| 3. Interface Adapters (Custom Hooks, Repositories, Service Adapters)                    |
++-----------------------------------------------------------------------------------------+
        ^
        | Dependencies
        v
-+------------------------------------------------------+
-| 2. Application Business Rules (Use Cases)            |
-+------------------------------------------------------+
++-----------------------------------------------------------------------------------------+
+| 2. Application Business Rules (Use Cases & Service Interfaces)                           |
++-----------------------------------------------------------------------------------------+
        ^
        | Dependencies
        v
-+------------------------------------------------------+
-| 1. Enterprise Business Rules (Entities - Future Use) |
-+------------------------------------------------------+
++-----------------------------------------------------------------------------------------+
+| 1. Enterprise Business Rules (Entities / Types)                                         |
++-----------------------------------------------------------------------------------------+
 ```
 
-### Layer 1: Enterprise Business Rules (Entities)
+### Layer 1: Enterprise Business Rules (Entities / Types)
 
-- **Content:** Core business objects and rules that are application-agnostic. (Note: For many frontend applications, this layer may remain light initially).
-- **Location:** `src/domain/`
+- **Content:** Core business objects and data structures. In TypeScript, these are typically `type` or `interface` definitions.
+- **Location:** `src/features/{feature-name}/types/`
 - **Dependencies:** None.
+- **Example:**
+  ```typescript
+  // src/features/auth/types/User.ts
+  export interface User {
+    id: string;
+    name: string;
+    email: string;
+  }
+  ```
 
-### Layer 2: Application Business Rules (Use Cases)
+### Layer 2: Application Business Rules (Use Cases & Service Interfaces)
 
-- **Standard:** This is the heart of the frontend application. It contains the application-specific orchestration logic. Each use case MUST be implemented as a `class` (also known as an "Interactor") to ensure a clear separation of concerns and explicit dependency injection.
+- **Standard:** This is the heart of the application logic. It defines the operations the application can perform and the contracts (interfaces) for any external dependencies.
 - **Content:**
-  - MUST NOT contain any reference to React, hooks, or any UI framework.
-  - Orchestrates the flow of data required for a specific user interaction on the frontend.
-  - Takes simple data types as input and returns a result.
-  - MUST depend on abstractions (interfaces) for any external services (like an `IAuthService`), not on concrete implementations.
-- **Location:** `src/features/{feature-name}/application/`
+  - **Use Cases:** Contains application-specific orchestration logic. Each use case MUST be a `class` that encapsulates a single user interaction flow (e.g., `RegisterUserUseCase`). It MUST NOT contain any reference to the UI framework or specific data-fetching libraries. It depends on service interfaces to interact with outer layers.
+  - **Service Interfaces:** These are the contracts that Use Cases depend on. They define what a service can do, but not how it does it. This is key to inversion of control.
+- **Location:**
+  - Use Cases: `src/features/{feature-name}/application/`
+  - Service Interfaces: `src/features/{feature-name}/interfaces/`
 - **Example:**
 
   ```typescript
-  // src/features/auth/application/registerUser.ts
-  import { IAuthService, RegistrationData, User } from "../interfaces";
+  // src/features/auth/interfaces/AuthService.ts
+  import { User } from "../types/User";
+  export type RegisterUserPayload = Omit<User, "id"> & { password: string };
+  export interface AuthService {
+    registerUser(payload: RegisterUserPayload): Promise<User>;
+  }
+
+  // src/features/auth/application/RegisterUserUseCase.ts
+  import { AuthService, RegisterUserPayload } from "../interfaces/AuthService";
+  import { User } from "../types/User";
 
   export class RegisterUserUseCase {
-    constructor(private readonly authService: IAuthService) {}
+    constructor(private readonly authService: AuthService) {}
 
-    async execute(payload: RegistrationData): Promise<User> {
+    async execute(payload: RegisterUserPayload): Promise<User> {
       // Application-specific logic lives here. e.g., analytics.track()
       return this.authService.registerUser(payload);
     }
   }
   ```
 
-### Layer 3: Interface Adapters (Custom Hooks)
+### Layer 3: Interface Adapters (Hooks, Repositories, Service Adapters)
 
-- **Standard:** This layer acts as the bridge between the application logic (Use Cases) and the UI framework (React).
+- **Standard:** This layer acts as the bridge between the application logic (Use Cases) and the technical details of the outer layer (Frameworks). It adapts data and calls into a format the Use Cases and UI can understand.
 - **Content:**
-  - Custom React Hooks that manage all UI-related state (`useState`, `useReducer`), side effects (`useEffect`), and user event handling.
-  - Responsible for instantiating Use Case classes and calling their `execute` methods.
-  - Injects concrete service implementations (or other dependencies) into the use cases upon instantiation.
-- **Location:** `src/features/{feature-name}/hooks/`
-- **Dependencies:** Depends on Use Cases (inward) and React (outward framework).
+  - **Custom Hooks:** The entry point from the UI. Manages UI state and side effects. Responsible for instantiating Use Cases and all their dependencies (acting as a Dependency Injection container).
+  - **Repositories:** Concrete implementations of data-access interfaces. They adapt a specific data source (e.g., a REST API via `FetchHttpClient`) to the interface required by a service adapter or use case.
+  - **Service Adapters:** Concrete implementations of the service interfaces defined in Layer 2. They orchestrate calls to one or more repositories to fulfill the contract of the service interface.
+- **Location:**
+  - Hooks: `src/features/{feature-name}/hooks/`
+  - Repositories: `src/features/{feature-name}/repositories/`
+  - Service Adapters: `src/features/{feature-name}/services/`
+  - Repository Interfaces: `src/features/{feature-name}/interfaces/`
+- **Dependencies:** Depends on Use Cases (inward) and specific frameworks (outward).
 - **Example:**
 
   ```typescript
   // src/features/auth/hooks/useRegistration.ts
   import { useState, useMemo } from "react";
-  import { RegisterUserUseCase } from "../application/registerUser";
-  import { authService } from "../services/authService"; // Concrete Adapter
+  import { RegisterUserUseCase } from "../application/RegisterUserUseCase";
+  import { AuthServiceAdapter } from "../services/AuthServiceAdapter";
+  import { UserRepositoryImpl } from "../repositories/UserRepository";
+  import { FetchHttpClient } from "@/services/FetchHttpClient"; // Concrete Driver
 
   export const useRegistration = () => {
     const [error, setError] = useState<string | null>(null);
     // ... other state ...
 
-    // Use `useMemo` to ensure the use case is instantiated only once.
-    const registerUserUseCase = useMemo(() => new RegisterUserUseCase(authService), []);
+    // The hook acts as a DI container, composing the dependencies.
+    const registerUserUseCase = useMemo(() => {
+      const httpClient = new FetchHttpClient();
+      const userRepository = new UserRepositoryImpl(httpClient);
+      const authService = new AuthServiceAdapter(userRepository);
+      return new RegisterUserUseCase(authService);
+    }, []);
 
     const handleSubmit = async (data) => {
       await registerUserUseCase.execute(data);
@@ -106,16 +134,17 @@ All frontend code MUST be organized into one of the following four layers. The f
   };
   ```
 
-### Layer 4: Frameworks & Drivers (React Components & Services)
+### Layer 4: Frameworks & Drivers (React Components & HTTP Client)
 
-- **Standard:** This is the outermost layer, composed of the implementation details.
+- **Standard:** The outermost layer, composed of implementation details and framework-specific code.
 - **Content:**
-  - **React Components:** "Dumb" components that only render UI based on props. They delegate all logic and event handling to the hooks provided to them.
-  - **Services:** Concrete implementations of the interfaces required by the Application Layer (e.g., `IAuthService`). Their job is to "adapt" the specific technology (e.g., `fetch` for a REST API, or a GraphQL client) to the needs of the application.
+  - **React Components:** "Dumb" components that only render UI based on props. They delegate all logic and event handling to the custom hooks provided to them.
+  - **HTTP Client:** A generic, reusable client for making network requests (e.g., a wrapper around `fetch`). It has no knowledge of the application's business rules.
 - **Location:**
-  - Components: `src/features/{feature-name}/components/` and `src/features/{feature-name}/routes/`
-  - Services: `src/features/{feature-name}/services/`
-  - Interfaces: `src/features/{feature-name}/interfaces/` (e.g., `IAuthService.ts`)
+  - Page Components: `src/features/{feature-name}/routes/`
+  - Dumb Components: `src/features/{feature-name}/components/`
+  - Generic Services: `src/services/` (e.g., `FetchHttpClient.ts`)
+  - Generic Interfaces: `src/shared/interfaces/`
 
 ## 4. Directory Structure (Non-Negotiable)
 
@@ -123,14 +152,21 @@ To enforce this separation, all feature-based modules MUST follow this directory
 
 ```
 src/
-└── features/
-    └── {feature-name}/
-        ├── application/   // Layer 2: Use Case classes (e.g., RegisterUserUseCase.ts)
-        ├── components/    // Layer 4: Dumb React Components
-        ├── hooks/         // Layer 3: Custom Hooks (e.g., useRegistration.ts)
-        ├── routes/        // Layer 4: Page-level Components
-        ├── services/      // Layer 4: Concrete service implementations (e.g., authService.ts)
-        └── interfaces/    // The contracts (TypeScript interfaces) for services.
+├── features/
+│   └── {feature-name}/
+│       ├── application/   // Layer 2: Use Case classes (RegisterUserUseCase.ts)
+│       ├── components/    // Layer 4: Dumb React Components (RegistrationForm.tsx)
+│       ├── hooks/         // Layer 3: Custom Hooks (useRegistration.ts)
+│       ├── interfaces/    // Layer 2/3: Service & Repo Interfaces (AuthService.ts, UserRepository.ts)
+│       ├── repositories/  // Layer 3: Concrete repository implementations (UserRepository.ts)
+│       ├── routes/        // Layer 4: Page-level Components (RegistrationPage.tsx)
+│       ├── services/      // Layer 3: Concrete service adapters (AuthServiceAdapter.ts)
+│       └── types/         // Layer 1: Data structures (User.ts)
+│
+├── services/              // Layer 4: Generic, reusable services (FetchHttpClient.ts)
+│
+└── shared/
+    └── interfaces/        // Layer 4: Interfaces for generic services (HttpClient.ts)
 ```
 
 ## 5. Enforcement
