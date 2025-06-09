@@ -17,6 +17,7 @@ const opts = {
   tags: ["main"], // Tag the pact with the branch name
 };
 
+// Republishing to update the main tag
 pact
   .publishPacts(opts)
   .then(() => {
