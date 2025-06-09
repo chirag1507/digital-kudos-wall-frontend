@@ -61,7 +61,7 @@ All frontend code MUST be organized into one of the following four layers. The f
 
   ```typescript
   // src/features/auth/application/registerUser.ts
-  import { IAuthService, RegistrationData, User } from "../ports"; // Note: Depends on a PORT
+  import { IAuthService, RegistrationData, User } from "../interfaces";
 
   export class RegisterUserUseCase {
     constructor(private readonly authService: IAuthService) {}
@@ -88,7 +88,7 @@ All frontend code MUST be organized into one of the following four layers. The f
   // src/features/auth/hooks/useRegistration.ts
   import { useState, useMemo } from "react";
   import { RegisterUserUseCase } from "../application/registerUser";
-  import { authService } from "../services/authServiceAdapter"; // Concrete Adapter
+  import { authService } from "../services/authService"; // Concrete Adapter
 
   export const useRegistration = () => {
     const [error, setError] = useState<string | null>(null);
@@ -111,11 +111,11 @@ All frontend code MUST be organized into one of the following four layers. The f
 - **Standard:** This is the outermost layer, composed of the implementation details.
 - **Content:**
   - **React Components:** "Dumb" components that only render UI based on props. They delegate all logic and event handling to the hooks provided to them.
-  - **Service Adapters:** Concrete implementations of the port interfaces required by the Application Layer (e.g., `IAuthService`). Their job is to "adapt" the specific technology (e.g., `fetch` for a REST API, or a GraphQL client) to the needs of the application.
+  - **Services:** Concrete implementations of the interfaces required by the Application Layer (e.g., `IAuthService`). Their job is to "adapt" the specific technology (e.g., `fetch` for a REST API, or a GraphQL client) to the needs of the application.
 - **Location:**
   - Components: `src/features/{feature-name}/components/` and `src/features/{feature-name}/routes/`
-  - Service Adapters: `src/features/{feature-name}/services/`
-  - Port Interfaces: `src/features/{feature-name}/ports/` (e.g., `IAuthService.ts`)
+  - Services: `src/features/{feature-name}/services/`
+  - Interfaces: `src/features/{feature-name}/interfaces/` (e.g., `IAuthService.ts`)
 
 ## 4. Directory Structure (Non-Negotiable)
 
@@ -129,8 +129,8 @@ src/
         ├── components/    // Layer 4: Dumb React Components
         ├── hooks/         // Layer 3: Custom Hooks (e.g., useRegistration.ts)
         ├── routes/        // Layer 4: Page-level Components
-        ├── services/      // Layer 4: Concrete service adapters (e.g., authServiceAdapter.ts)
-        └── ports/         // Interfaces for services required by the application layer.
+        ├── services/      // Layer 4: Concrete service implementations (e.g., authService.ts)
+        └── interfaces/    // The contracts (TypeScript interfaces) for services.
 ```
 
 ## 5. Enforcement

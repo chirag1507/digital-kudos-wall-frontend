@@ -1,19 +1,9 @@
-import { apiClient, RegisterUserPayload, User } from "@/services/apiClient";
-
-export interface IAuthService {
-  registerUser(payload: RegisterUserPayload): Promise<User>;
-}
+import { AuthService, RegisterUserPayload, User } from "../interfaces/AuthService";
 
 export class RegisterUserUseCase {
-  constructor(private readonly authService: IAuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   async execute(payload: RegisterUserPayload): Promise<User> {
     return this.authService.registerUser(payload);
   }
 }
-
-const authService: IAuthService = {
-  registerUser: apiClient.registerUser,
-};
-
-export const registerUser = new RegisterUserUseCase(authService);
