@@ -1,11 +1,9 @@
 import { HttpClient } from "@/shared/interfaces/HttpClient";
 
-const API_BASE_URL = "http://localhost:3000"; // This should come from env vars
-
 export class FetchHttpClient implements HttpClient {
   private baseUrl: string;
 
-  constructor(baseUrl: string = API_BASE_URL) {
+  constructor(baseUrl: string = "") {
     this.baseUrl = baseUrl;
   }
 
@@ -27,8 +25,8 @@ export class FetchHttpClient implements HttpClient {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      const error = await response.text();
+      throw new Error(`Server error (${response.status}): ${error}`);
     }
 
     return response.json();
