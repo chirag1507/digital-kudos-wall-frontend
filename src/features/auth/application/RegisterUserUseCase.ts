@@ -1,4 +1,5 @@
-import { AuthService, RegisterUserPayload, User } from "../interfaces/AuthService";
+import { AuthService, RegisterUserPayload } from "../interfaces/AuthService";
+import { User } from "../types/User";
 
 export class RegisterUserUseCase {
   constructor(private readonly authService: AuthService) {}

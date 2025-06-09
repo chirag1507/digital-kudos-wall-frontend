@@ -1,25 +1,20 @@
 import { Pact, Matchers } from "@pact-foundation/pact";
 import path from "path";
-import { createApiClient } from "../apiClient"; // Corrected import path
+import { FetchHttpClient } from "@/services/FetchHttpClient";
+import { UserRepositoryImpl } from "@/features/auth/repositories/UserRepository";
 
 const { like } = Matchers;
-
-// Remove the global fetch override if your test runner supports it natively
-// global.fetch = fetch;
 
 const mockProvider = new Pact({
   consumer: "DigitalKudosWallFrontend",
   provider: "DigitalKudosWallBackend",
   port: 1234,
   log: path.resolve(process.cwd(), "logs", "pact.log"),
-  dir: path.resolve(process.cwd(), "src", "__tests__", "pacts"),
+  dir: path.resolve(process.cwd(), "pacts"),
   logLevel: "info",
 });
 
-// Remove the test-only API client
-// const createTestApiClient = ...
-
-describe("API Client - User Registration Contract", () => {
+describe("UserRepository - User Registration Contract", () => {
   beforeAll(() => mockProvider.setup());
   afterAll(() => mockProvider.finalize());
 
@@ -30,11 +25,12 @@ describe("API Client - User Registration Contract", () => {
         uponReceiving: "a request to register a new user",
         withRequest: {
           method: "POST",
-          path: "/api/v1/users/register",
+          path: "/users/register",
           headers: {
             "Content-Type": "application/json",
           },
           body: {
+            name: "pact-test-user",
             email: "pact-test@example.com",
             password: "ValidPassword123!",
           },
@@ -46,6 +42,7 @@ describe("API Client - User Registration Contract", () => {
           },
           body: {
             id: like("some-id"),
+            name: "pact-test-user",
             email: "pact-test@example.com",
           },
         },
@@ -55,16 +52,18 @@ describe("API Client - User Registration Contract", () => {
     afterEach(() => mockProvider.verify());
 
     it("should register successfully and return user data", async () => {
-      // Create a real API client instance pointed at the mock server
-      const testApiClient = createApiClient(mockProvider.mockService.baseUrl);
+      const httpClient = new FetchHttpClient(mockProvider.mockService.baseUrl);
+      const userRepository = new UserRepositoryImpl(httpClient);
       const userData = {
+        name: "pact-test-user",
         email: "pact-test@example.com",
         password: "ValidPassword123!",
       };
 
-      const result = await testApiClient.registerUser(userData);
+      const result = await userRepository.register(userData);
 
       expect(result).toHaveProperty("id");
+      expect(result).toHaveProperty("name", "pact-test-user");
       expect(result).toHaveProperty("email", "pact-test@example.com");
     });
   });

@@ -1,12 +1,6 @@
-export interface User {
-  id: string;
-  email: string;
-}
+import { User } from "../types/User";
 
-export interface RegisterUserPayload {
-  email: string;
-  password: string;
-}
+export type RegisterUserPayload = Omit<User, "id"> & { password: string };
 
 export interface AuthService {
   registerUser(payload: RegisterUserPayload): Promise<User>;

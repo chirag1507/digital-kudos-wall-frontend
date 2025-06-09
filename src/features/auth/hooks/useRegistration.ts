@@ -1,7 +1,9 @@
 import { useState, useMemo } from "react";
-import { RegisterUserUseCase } from "../application/registerUser";
+import { RegisterUserUseCase } from "../application/RegisterUserUseCase";
 import { AuthServiceAdapter } from "../services/AuthServiceAdapter";
+import { UserRepositoryImpl } from "../repositories/UserRepository";
 import { RegisterUserPayload } from "../interfaces/AuthService";
+import { FetchHttpClient } from "@/services/FetchHttpClient";
 
 export const useRegistration = () => {
   const [error, setError] = useState<string | null>(null);
@@ -9,7 +11,9 @@ export const useRegistration = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   const registerUserUseCase = useMemo(() => {
-    const authService = new AuthServiceAdapter();
+    const httpClient = new FetchHttpClient();
+    const userRepository = new UserRepositoryImpl(httpClient);
+    const authService = new AuthServiceAdapter(userRepository);
     return new RegisterUserUseCase(authService);
   }, []);
 
