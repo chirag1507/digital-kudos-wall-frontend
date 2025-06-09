@@ -1,5 +1,4 @@
-import pact from "@pact-foundation/pact";
-const { Publisher } = pact;
+import pact from "@pact-foundation/pact-node";
 import path from "path";
 import pkg from "../package.json" with { type: "json" };
 import { cwd } from "node:process";
@@ -18,8 +17,8 @@ const opts = {
   tags: ["main"], // Tag the pact with the branch name
 };
 
-new Publisher(opts)
-  .publishPacts()
+pact
+  .publishPacts(opts)
   .then(() => {
     console.log("Pact contract publishing complete!");
     console.log("");
