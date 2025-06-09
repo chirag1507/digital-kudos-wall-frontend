@@ -1,6 +1,7 @@
-import { Publisher } from "@pact-foundation/pact";
+import pact from "@pact-foundation/pact";
+const { Publisher } = pact;
 import path from "path";
-import { version } from "../package.json" assert { type: "json" };
+import { version } from "../package.json" with { type: "json" };
 import { cwd, process } from "node:process";
 
 // This is the version of the consumer application that is publishing the pact.
