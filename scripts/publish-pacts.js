@@ -1,14 +1,14 @@
 import pact from "@pact-foundation/pact";
 const { Publisher } = pact;
 import path from "path";
-import { version } from "../package.json" with { type: "json" };
+import pkg from "../package.json" with { type: "json" };
 import { cwd } from "node:process";
 
 // This is the version of the consumer application that is publishing the pact.
 // It is recommended to use the git sha for this.
 // We are using the package.json version for simplicity, but you should probably
 // use process.env.GITHUB_SHA in a real CI/CD environment.
-const appVersion = process.env.GITHUB_SHA || version;
+const appVersion = process.env.GITHUB_SHA || pkg.version;
 
 const opts = {
   pactFilesOrDirs: [path.resolve(cwd(), "pacts")],
