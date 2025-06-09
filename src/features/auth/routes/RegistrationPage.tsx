@@ -14,6 +14,7 @@ const RegistrationPage: React.FC = () => {
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
 
+  const name = useFormField("");
   const email = useFormField("");
   const password = useFormField("");
 
@@ -27,6 +28,7 @@ const RegistrationPage: React.FC = () => {
       // In a real scenario, you'd call a login use case here.
     } else {
       await handleSubmit({
+        name: name.value,
         email: email.value,
         password: password.value,
       });
@@ -70,6 +72,7 @@ const RegistrationPage: React.FC = () => {
 
         <CardContent sx={{ p: 6 }}>
           <RegistrationForm
+            name={name}
             email={email}
             password={password}
             onSubmit={handleFormSubmit}
