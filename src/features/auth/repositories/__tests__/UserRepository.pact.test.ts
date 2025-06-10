@@ -44,6 +44,7 @@ describe("UserRepository - User Registration Contract", () => {
             id: like("some-id"),
             name: "pact-test-user",
             email: "pact-test@example.com",
+            accountType: like("standard"),
           },
         },
       });
@@ -65,6 +66,7 @@ describe("UserRepository - User Registration Contract", () => {
       expect(result).toHaveProperty("id");
       expect(result).toHaveProperty("name", "pact-test-user");
       expect(result).toHaveProperty("email", "pact-test@example.com");
+      expect(result).toHaveProperty("accountType");
     });
   });
 });
