@@ -4,6 +4,7 @@ import "./App.css";
 import KudosWallPage from "./features/kudos/routes/KudosWallPage";
 import RegistrationPage from "./features/auth/routes/RegistrationPage";
 
+// Kicking off the CI/CD pipeline to test the full contract testing flow.
 function App(): JSX.Element {
   // Test comment to trigger new build
   return (
