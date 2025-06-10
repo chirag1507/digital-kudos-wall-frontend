@@ -58,7 +58,7 @@ describe("UserRepository - User Registration Contract", () => {
       const userData = {
         name: "pact-test-user",
         email: "pact-test@example.com",
-        password: "ValidPassword123!",
+        password: "ValidPassword123!", // Forcing another CI run
       };
 
       const result = await userRepository.register(userData);
