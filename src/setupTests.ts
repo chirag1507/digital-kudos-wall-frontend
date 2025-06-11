@@ -1,20 +1,20 @@
 // Jest setup file for frontend tests
 import "@testing-library/jest-dom";
-import "cross-fetch/polyfill";
-import { TextEncoder, TextDecoder } from "util";
+import { server } from "./__tests__/mocks/server";
 
-// Global test configuration
-if (typeof global !== "undefined") {
-  global.console = {
-    ...console,
-    // Uncomment to ignore specific console outputs during tests
-    // log: jest.fn(),
-    // debug: jest.fn(),
-    // info: jest.fn(),
-    // warn: jest.fn(),
-    // error: jest.fn(),
-  };
+// Polyfills for React Router - simple approach to avoid require() linter errors
+if (typeof global.TextEncoder === "undefined") {
+  const { TextEncoder, TextDecoder } = eval("require")("util");
+  global.TextEncoder = TextEncoder;
+  global.TextDecoder = TextDecoder;
 }
 
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder as typeof global.TextDecoder;
+// Establish API mocking before all tests.
+beforeAll(() => server.listen());
+
+// Reset any request handlers that we may add during the tests,
+// so they don't affect other tests.
+afterEach(() => server.resetHandlers());
+
+// Clean up after the tests are finished.
+afterAll(() => server.close());
