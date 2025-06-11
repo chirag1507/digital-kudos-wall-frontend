@@ -5,7 +5,12 @@ const config: Config = {
   testEnvironment: "jsdom",
   roots: ["<rootDir>/src"],
   testMatch: ["**/__tests__/**/*.ts?(x)", "**/?(*.)+(spec|test).ts?(x)"],
-  testPathIgnorePatterns: ["/node_modules/", "/src/__tests__/mocks/handlers.ts", "/src/__tests__/mocks/server.ts"],
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "/src/__tests__/mocks/handlers.ts",
+    "/src/__tests__/mocks/server.ts",
+    "/src/__tests__/page-objects/",
+  ],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
     "\\.(css|less|scss|sass)$": "identity-obj-proxy",
@@ -18,6 +23,7 @@ const config: Config = {
     "!src/**/vite-env.d.ts",
     "!src/**/__tests__/**",
     "!src/**/*.pact.test.ts",
+    "!src/**/__tests__/page-objects/**",
   ],
   coverageDirectory: "coverage",
   collectCoverage: true,

@@ -1,5 +1,6 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import RegistrationForm from "../RegistrationForm";
+import { PageFactory } from "@/__tests__/page-objects";
 
 describe("Component Test: RegistrationForm", () => {
   // Test doubles (mocks) - isolating from external dependencies
@@ -21,7 +22,11 @@ describe("Component Test: RegistrationForm", () => {
     error: null,
   };
 
-  const renderComponent = (props = {}) => render(<RegistrationForm {...mockProps} {...props} />);
+  const renderComponent = (props = {}) => {
+    const { container } = render(<RegistrationForm {...mockProps} {...props} />);
+    const page = PageFactory.createRegistrationFormPage(container);
+    return { container, page };
+  };
 
   beforeEach(() => {
     // Reset all mocks to ensure test isolation
@@ -30,46 +35,38 @@ describe("Component Test: RegistrationForm", () => {
 
   describe("Component State Rendering", () => {
     test("should render registration mode correctly", () => {
-      renderComponent();
+      const { page } = renderComponent();
 
-      expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /create account/i })).toBeInTheDocument();
+      page.shouldShowRegistrationFields();
+      expect(page.getSubmitButtonText()).toMatch(/create account/i);
     });
 
     test("should render login mode correctly", () => {
-      renderComponent({ isLoginMode: true });
+      const { page } = renderComponent({ isLoginMode: true });
 
-      expect(screen.queryByLabelText(/full name/i)).not.toBeInTheDocument();
-      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+      page.shouldShowLoginFields();
+      expect(page.getSubmitButtonText()).toMatch(/sign in/i);
     });
 
     test("should display error states", () => {
-      renderComponent({ error: "Registration failed" });
+      const { page } = renderComponent({ error: "Registration failed" });
 
-      expect(screen.getByText(/registration failed/i)).toBeInTheDocument();
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      page.shouldShowError("Registration failed");
     });
 
     test("should display loading states", () => {
-      renderComponent({ isLoading: true });
+      const { page } = renderComponent({ isLoading: true });
 
-      const button = screen.getByRole("button", { name: /creating account/i });
-      expect(button).toBeDisabled();
-      expect(button).toHaveTextContent("Creating Account...");
+      page.shouldBeInLoadingState();
     });
   });
 
   describe("User Interactions", () => {
     test("should handle form submission", () => {
       const mockOnSubmit = jest.fn();
-      renderComponent({ onSubmit: mockOnSubmit });
+      const { page } = renderComponent({ onSubmit: mockOnSubmit });
 
-      const form = screen.getByRole("button").closest("form");
-      fireEvent.submit(form!);
+      page.submitForm();
 
       expect(mockOnSubmit).toHaveBeenCalledTimes(1);
     });
@@ -79,52 +76,68 @@ describe("Component Test: RegistrationForm", () => {
       const mockEmailChange = jest.fn();
       const mockPasswordChange = jest.fn();
 
-      renderComponent({
+      const { page } = renderComponent({
         name: { value: "", onChange: mockNameChange },
         email: { value: "", onChange: mockEmailChange },
         password: { value: "", onChange: mockPasswordChange },
       });
 
-      const nameField = screen.getByLabelText(/full name/i);
-      const emailField = screen.getByLabelText(/email address/i);
-      const passwordField = screen.getByLabelText(/password/i);
-
-      fireEvent.change(nameField, { target: { value: "John" } });
-      fireEvent.change(emailField, { target: { value: "john@example.com" } });
-      fireEvent.change(passwordField, { target: { value: "password123" } });
+      page.fillNameField("John");
+      page.fillEmailField("john@example.com");
+      page.fillPasswordField("password123");
 
       // Focus on behavior: callbacks are triggered
       expect(mockNameChange).toHaveBeenCalledTimes(1);
       expect(mockEmailChange).toHaveBeenCalledTimes(1);
       expect(mockPasswordChange).toHaveBeenCalledTimes(1);
     });
+
+    test("should handle complete registration flow", () => {
+      const mockOnSubmit = jest.fn();
+      const { page } = renderComponent({ onSubmit: mockOnSubmit });
+
+      page.performRegistration("John Doe", "john@example.com", "password123");
+
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    });
+
+    test("should handle complete login flow", () => {
+      const mockOnSubmit = jest.fn();
+      const { page } = renderComponent({
+        isLoginMode: true,
+        onSubmit: mockOnSubmit,
+      });
+
+      page.performLogin("john@example.com", "password123");
+
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("Component Communication", () => {
     test("should prevent submission when disabled", () => {
       const mockOnSubmit = jest.fn();
-      renderComponent({
+      const { page } = renderComponent({
         onSubmit: mockOnSubmit,
         isLoading: true,
       });
 
-      const submitButton = screen.getByRole("button");
-      expect(submitButton).toBeDisabled();
+      expect(page.isSubmitButtonDisabled()).toBe(true);
+      page.clickSubmitButton();
 
-      fireEvent.click(submitButton);
       expect(mockOnSubmit).not.toHaveBeenCalled();
     });
 
     test("should handle state transitions correctly", () => {
-      const { rerender } = renderComponent({ error: "Initial error" });
+      const { page, container } = renderComponent({ error: "Initial error" });
 
-      expect(screen.getByText(/initial error/i)).toBeInTheDocument();
+      page.shouldShowError("Initial error");
 
-      // Component should react to prop changes
-      rerender(<RegistrationForm {...mockProps} error={null} isLoading={true} />);
+      // Re-render with new props
+      render(<RegistrationForm {...mockProps} error={null} isLoading={true} />, { container });
 
-      expect(screen.queryByText(/initial error/i)).not.toBeInTheDocument();
-      expect(screen.getByRole("button")).toBeDisabled();
+      page.shouldNotShowError();
+      page.shouldBeInLoadingState();
     });
 
     test("should render with controlled form values", () => {
@@ -134,11 +147,34 @@ describe("Component Test: RegistrationForm", () => {
         password: { value: "password123", onChange: jest.fn() },
       };
 
-      renderComponent(filledProps);
+      const { page } = renderComponent(filledProps);
 
-      expect(screen.getByDisplayValue("John Doe")).toBeInTheDocument();
-      expect(screen.getByDisplayValue("john@example.com")).toBeInTheDocument();
-      expect(screen.getByDisplayValue("password123")).toBeInTheDocument();
+      page.shouldDisplayFieldValues("John Doe", "john@example.com", "password123");
+    });
+  });
+
+  describe("Page Object Validation", () => {
+    test("should correctly identify form modes", () => {
+      const { page: registrationPage } = renderComponent();
+      const { page: loginPage } = renderComponent({ isLoginMode: true });
+
+      expect(registrationPage.isInRegistrationMode()).toBe(true);
+      expect(registrationPage.isInLoginMode()).toBe(false);
+
+      expect(loginPage.isInRegistrationMode()).toBe(false);
+      expect(loginPage.isInLoginMode()).toBe(true);
+    });
+
+    test("should provide accurate field values", () => {
+      const { page } = renderComponent({
+        name: { value: "Test User", onChange: jest.fn() },
+        email: { value: "test@example.com", onChange: jest.fn() },
+        password: { value: "testpass", onChange: jest.fn() },
+      });
+
+      expect(page.getNameFieldValue()).toBe("Test User");
+      expect(page.getEmailFieldValue()).toBe("test@example.com");
+      expect(page.getPasswordFieldValue()).toBe("testpass");
     });
   });
 });

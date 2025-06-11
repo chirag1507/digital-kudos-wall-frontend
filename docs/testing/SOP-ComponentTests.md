@@ -1,10 +1,24 @@
 # Standard Operating Procedure: Frontend Component Tests
 
 **Status:** Mandatory
-**Version:** 1.0
+**Version:** 1.1
 **Date:** {{CURRENT_DATE}}
 
 **NON-NEGOTIABLE STANDARD:** Adherence to this SOP is mandatory for all Frontend Component Tests. Deviations are not permitted without explicit architectural review and approval.
+
+## Table of Contents
+
+1. [Purpose](#1-purpose)
+2. [Scope](#2-scope)
+3. [Definitions](#3-definitions)
+4. [Key Principles (Non-Negotiable)](#4-key-principles-non-negotiable)
+5. [Page Object Pattern (Mandatory)](#5-page-object-pattern-mandatory)
+6. [Test Structure (Arrange-Act-Assert)](#6-test-structure-arrange-act-assert)
+7. [What NOT to Test (Implementation Details)](#7-what-not-to-test-implementation-details)
+8. [Modern Test Pyramid Alignment](#8-modern-test-pyramid-alignment)
+9. [Test Categories and Examples](#9-test-categories-and-examples)
+10. [Forbidden Test Types](#10-forbidden-test-types)
+11. [Tools and Setup](#11-tools-and-setup)
 
 ## 1. Purpose
 
@@ -120,7 +134,109 @@ expect(wrapper.find("input[type='email']")).toHaveLength(1);
 - **Rationale:** Fast tests provide immediate feedback during development, supporting rapid iteration.
 - **Implementation:** Achieved by avoiding real API calls, timers, or external dependencies.
 
-## 5. Test Structure (Arrange-Act-Assert)
+## 5. Page Object Pattern (Mandatory)
+
+To further enhance test maintainability and adhere to Clean Architecture principles, the **Page Object Pattern** is a **mandatory** standard for all component tests.
+
+### 5.1. Rationale
+
+The Page Object Pattern encapsulates the component's UI and interactions into a separate class, providing several key benefits:
+
+- **DRY (Don't Repeat Yourself):** Selectors and interaction logic are defined once and reused across multiple tests.
+- **Maintainability:** When the component's UI structure changes, updates are only needed in one place—the Page Object—not in every test file.
+- **Readability:** Tests become more declarative and focused on behavior, reading like user scenarios rather than a series of DOM queries.
+- **Clean Architecture:** It separates the "what" (the test's intent) from the "how" (the implementation details of interacting with the component).
+
+### 5.2. Structure
+
+The Page Object infrastructure MUST be organized as follows within the `src/__tests__/page-objects/` directory:
+
+- **`base.page.ts`:** An abstract base class containing common query helpers and utilities for interacting with `@testing-library/react`.
+- **`[component-name].page.ts`:** A dedicated Page Object class for the component under test. It inherits from `BasePage` and exposes high-level methods for interactions and assertions.
+- **`page.factory.ts`:** A factory class responsible for creating instances of Page Objects.
+- **`index.ts`:** An index file that exports all Page Object classes for clean imports.
+
+### 5.3. Implementation Example
+
+A Page Object should expose high-level, behavior-oriented methods.
+
+**Example: `registration-form.page.ts`**
+
+```typescript
+export class RegistrationFormPage extends BasePage {
+  // Element getters
+  get nameField(): HTMLElement {
+    /* ... */
+  }
+  get submitButton(): HTMLElement {
+    /* ... */
+  }
+
+  // High-level actions
+  fillRegistrationForm(name: string, email: string, password: string): void {
+    this.fillNameField(name);
+    this.fillEmailField(email);
+    this.fillPasswordField(password);
+  }
+
+  submitForm(): void {
+    fireEvent.submit(this.form);
+  }
+
+  // Compound actions
+  performRegistration(name: string, email: string, password: string): void {
+    this.fillRegistrationForm(name, email, password);
+    this.submitForm();
+  }
+
+  // State verification
+  shouldShowError(expectedError: string): void {
+    expect(this.hasError()).toBe(true);
+    expect(this.getErrorText()).toMatch(new RegExp(expectedError, "i"));
+  }
+
+  shouldBeInLoadingState(): void {
+    expect(this.isSubmitButtonDisabled()).toBe(true);
+  }
+}
+```
+
+### 5.4. Refactoring Tests to Use Page Objects
+
+Tests MUST be refactored to use the Page Object instead of direct `@testing-library/react` calls for component interactions.
+
+**❌ INCORRECT (Before Page Objects):**
+
+```typescript
+test("should handle form submission", () => {
+  const mockOnSubmit = jest.fn();
+  renderComponent({ onSubmit: mockOnSubmit });
+
+  fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: "John" } });
+  fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "john@doe.com" } });
+  fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password" } });
+  fireEvent.click(screen.getByRole("button"));
+
+  expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+});
+```
+
+**✅ CORRECT (With Page Objects):**
+
+```typescript
+test("should handle form submission", () => {
+  const mockOnSubmit = jest.fn();
+  const { page } = renderComponent({ onSubmit: mockOnSubmit });
+
+  page.performRegistration("John Doe", "john@example.com", "password123");
+
+  expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+});
+```
+
+**Canonical Example:** For a complete implementation, refer to `RegistrationForm.component.test.tsx` and its corresponding Page Object in `src/__tests__/page-objects/registration-form.page.ts`.
+
+## 6. Test Structure (Arrange-Act-Assert)
 
 - **Standard:** All tests MUST follow the Arrange-Act-Assert (AAA) pattern with clear test organization.
 
@@ -170,29 +286,29 @@ describe("Component Test: ComponentName", () => {
 });
 ```
 
-## 6. What NOT to Test (Implementation Details)
+## 7. What NOT to Test (Implementation Details)
 
-### 6.1. HTML Structure and Attributes
+### 7.1. HTML Structure and Attributes
 
 - Input types, required attributes, CSS classes
 - **Rationale:** These are implementation details that should be handled by TypeScript, linting, and accessibility tools
 
-### 6.2. Framework-Specific Details
+### 7.2. Framework-Specific Details
 
 - React lifecycle methods, hooks implementation
 - **Rationale:** These are React internals, not component behavior
 
-### 6.3. Props Interface Edge Cases
+### 7.3. Props Interface Edge Cases
 
 - Handling missing props, default props behavior
 - **Rationale:** TypeScript provides compile-time safety for props interfaces
 
-### 6.4. Styling and Layout
+### 7.4. Styling and Layout
 
 - CSS classes, inline styles, visual positioning
 - **Rationale:** Visual testing should be handled by visual regression tools
 
-## 7. Modern Test Pyramid Alignment
+## 8. Modern Test Pyramid Alignment
 
 This SOP directly implements the Modern Test Pyramid principles:
 
@@ -201,9 +317,9 @@ This SOP directly implements the Modern Test Pyramid principles:
 - **Reduced Debugging Time:** No need to debug across system boundaries
 - **Component Isolation:** Frontend components tested independently of backend
 
-## 8. Test Categories and Examples
+## 9. Test Categories and Examples
 
-### 8.1. Component State Rendering (Test Different Component States)
+### 9.1. Component State Rendering (Test Different Component States)
 
 ```typescript
 ✅ "should render registration mode correctly"
@@ -212,7 +328,7 @@ This SOP directly implements the Modern Test Pyramid principles:
 ✅ "should display loading states"
 ```
 
-### 8.2. User Interactions (Test User Actions)
+### 9.2. User Interactions (Test User Actions)
 
 ```typescript
 ✅ "should handle form submission"
@@ -221,7 +337,7 @@ This SOP directly implements the Modern Test Pyramid principles:
 ✅ "should handle keyboard navigation"
 ```
 
-### 8.3. Component Communication (Test Parent-Child Communication)
+### 9.3. Component Communication (Test Parent-Child Communication)
 
 ```typescript
 ✅ "should prevent submission when disabled"
@@ -230,7 +346,7 @@ This SOP directly implements the Modern Test Pyramid principles:
 ✅ "should call parent callbacks with correct parameters"
 ```
 
-## 9. Forbidden Test Types
+## 10. Forbidden Test Types
 
 The following test types are **EXPLICITLY FORBIDDEN** as they violate Modern Test Pyramid principles:
 
@@ -245,15 +361,15 @@ The following test types are **EXPLICITLY FORBIDDEN** as they violate Modern Tes
 ❌ "should match snapshot" (for structural testing)
 ```
 
-## 10. Tools and Setup
+## 11. Tools and Setup
 
-### 10.1. Required Dependencies
+### 11.1. Required Dependencies
 
 - `@testing-library/react` - Component rendering and queries
 - `@testing-library/jest-dom` - Custom Jest matchers
 - `jest` - Test runner and mocking framework
 
-### 10.2. Prohibited Tools for Component Tests
+### 11.2. Prohibited Tools for Component Tests
 
 - `enzyme` - Encourages implementation detail testing
 - `react-test-renderer` - Too low-level for behavior testing
