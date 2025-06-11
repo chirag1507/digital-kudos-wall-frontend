@@ -1,4 +1,5 @@
-import { rest } from "msw";
+// import { rest } from "msw";
+// TODO: Uncomment the 'rest' import when you add MSW request handlers.
 
 export const handlers = [
   // Define your request handlers here.
