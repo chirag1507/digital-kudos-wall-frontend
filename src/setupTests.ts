@@ -1,4 +1,5 @@
 // Jest setup file for frontend tests
+import "cross-fetch/polyfill";
 import "@testing-library/jest-dom";
 import { server } from "./__tests__/mocks/server";
 
