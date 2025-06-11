@@ -1,31 +1,14 @@
 import { render } from "@testing-library/react";
 import RegistrationForm from "../RegistrationForm";
 import { PageFactory } from "@/__tests__/page-objects";
+import { RegistrationFormPropsBuilder } from "@/__tests__/builders/registration-form-props.builder";
 
 describe("Component Test: RegistrationForm", () => {
-  // Test doubles (mocks) - isolating from external dependencies
-  const mockProps = {
-    name: {
-      value: "",
-      onChange: jest.fn(),
-    },
-    email: {
-      value: "",
-      onChange: jest.fn(),
-    },
-    password: {
-      value: "",
-      onChange: jest.fn(),
-    },
-    onSubmit: jest.fn(),
-    isLoading: false,
-    error: null,
-  };
-
   const renderComponent = (props = {}) => {
-    const { container } = render(<RegistrationForm {...mockProps} {...props} />);
+    const finalProps = { ...new RegistrationFormPropsBuilder().build(), ...props };
+    const { container } = render(<RegistrationForm {...finalProps} />);
     const page = PageFactory.createRegistrationFormPage(container);
-    return { container, page };
+    return { container, page, props: finalProps };
   };
 
   beforeEach(() => {
@@ -42,20 +25,23 @@ describe("Component Test: RegistrationForm", () => {
     });
 
     test("should render login mode correctly", () => {
-      const { page } = renderComponent({ isLoginMode: true });
+      const props = new RegistrationFormPropsBuilder().inLoginMode().build();
+      const { page } = renderComponent(props);
 
       page.shouldShowLoginFields();
       expect(page.getSubmitButtonText()).toMatch(/sign in/i);
     });
 
     test("should display error states", () => {
-      const { page } = renderComponent({ error: "Registration failed" });
+      const props = new RegistrationFormPropsBuilder().withError("Registration failed").build();
+      const { page } = renderComponent(props);
 
       page.shouldShowError("Registration failed");
     });
 
     test("should display loading states", () => {
-      const { page } = renderComponent({ isLoading: true });
+      const props = new RegistrationFormPropsBuilder().isLoading().build();
+      const { page } = renderComponent(props);
 
       page.shouldBeInLoadingState();
     });
@@ -64,7 +50,8 @@ describe("Component Test: RegistrationForm", () => {
   describe("User Interactions", () => {
     test("should handle form submission", () => {
       const mockOnSubmit = jest.fn();
-      const { page } = renderComponent({ onSubmit: mockOnSubmit });
+      const props = new RegistrationFormPropsBuilder().withOnSubmit(mockOnSubmit).build();
+      const { page } = renderComponent(props);
 
       page.submitForm();
 
@@ -76,17 +63,17 @@ describe("Component Test: RegistrationForm", () => {
       const mockEmailChange = jest.fn();
       const mockPasswordChange = jest.fn();
 
-      const { page } = renderComponent({
-        name: { value: "", onChange: mockNameChange },
-        email: { value: "", onChange: mockEmailChange },
-        password: { value: "", onChange: mockPasswordChange },
-      });
+      const props = new RegistrationFormPropsBuilder()
+        .withName("", mockNameChange)
+        .withEmail("", mockEmailChange)
+        .withPassword("", mockPasswordChange)
+        .build();
+      const { page } = renderComponent(props);
 
       page.fillNameField("John");
       page.fillEmailField("john@example.com");
       page.fillPasswordField("password123");
 
-      // Focus on behavior: callbacks are triggered
       expect(mockNameChange).toHaveBeenCalledTimes(1);
       expect(mockEmailChange).toHaveBeenCalledTimes(1);
       expect(mockPasswordChange).toHaveBeenCalledTimes(1);
@@ -94,7 +81,8 @@ describe("Component Test: RegistrationForm", () => {
 
     test("should handle complete registration flow", () => {
       const mockOnSubmit = jest.fn();
-      const { page } = renderComponent({ onSubmit: mockOnSubmit });
+      const props = new RegistrationFormPropsBuilder().withOnSubmit(mockOnSubmit).build();
+      const { page } = renderComponent(props);
 
       page.performRegistration("John Doe", "john@example.com", "password123");
 
@@ -103,10 +91,8 @@ describe("Component Test: RegistrationForm", () => {
 
     test("should handle complete login flow", () => {
       const mockOnSubmit = jest.fn();
-      const { page } = renderComponent({
-        isLoginMode: true,
-        onSubmit: mockOnSubmit,
-      });
+      const props = new RegistrationFormPropsBuilder().inLoginMode().withOnSubmit(mockOnSubmit).build();
+      const { page } = renderComponent(props);
 
       page.performLogin("john@example.com", "password123");
 
@@ -117,10 +103,8 @@ describe("Component Test: RegistrationForm", () => {
   describe("Component Communication", () => {
     test("should prevent submission when disabled", () => {
       const mockOnSubmit = jest.fn();
-      const { page } = renderComponent({
-        onSubmit: mockOnSubmit,
-        isLoading: true,
-      });
+      const props = new RegistrationFormPropsBuilder().isLoading().withOnSubmit(mockOnSubmit).build();
+      const { page } = renderComponent(props);
 
       expect(page.isSubmitButtonDisabled()).toBe(true);
       page.clickSubmitButton();
@@ -129,25 +113,26 @@ describe("Component Test: RegistrationForm", () => {
     });
 
     test("should handle state transitions correctly", () => {
-      const { page, container } = renderComponent({ error: "Initial error" });
+      const initialProps = new RegistrationFormPropsBuilder().withError("Initial error").build();
+      const { page, container } = renderComponent(initialProps);
 
       page.shouldShowError("Initial error");
 
-      // Re-render with new props
-      render(<RegistrationForm {...mockProps} error={null} isLoading={true} />, { container });
+      const finalProps = new RegistrationFormPropsBuilder().isLoading().build();
+      render(<RegistrationForm {...finalProps} />, { container });
 
       page.shouldNotShowError();
       page.shouldBeInLoadingState();
     });
 
     test("should render with controlled form values", () => {
-      const filledProps = {
-        name: { value: "John Doe", onChange: jest.fn() },
-        email: { value: "john@example.com", onChange: jest.fn() },
-        password: { value: "password123", onChange: jest.fn() },
-      };
+      const props = new RegistrationFormPropsBuilder()
+        .withName("John Doe")
+        .withEmail("john@example.com")
+        .withPassword("password123")
+        .build();
 
-      const { page } = renderComponent(filledProps);
+      const { page } = renderComponent(props);
 
       page.shouldDisplayFieldValues("John Doe", "john@example.com", "password123");
     });
@@ -155,8 +140,8 @@ describe("Component Test: RegistrationForm", () => {
 
   describe("Page Object Validation", () => {
     test("should correctly identify form modes", () => {
-      const { page: registrationPage } = renderComponent();
-      const { page: loginPage } = renderComponent({ isLoginMode: true });
+      const { page: registrationPage } = renderComponent(new RegistrationFormPropsBuilder().build());
+      const { page: loginPage } = renderComponent(new RegistrationFormPropsBuilder().inLoginMode().build());
 
       expect(registrationPage.isInRegistrationMode()).toBe(true);
       expect(registrationPage.isInLoginMode()).toBe(false);
@@ -166,11 +151,12 @@ describe("Component Test: RegistrationForm", () => {
     });
 
     test("should provide accurate field values", () => {
-      const { page } = renderComponent({
-        name: { value: "Test User", onChange: jest.fn() },
-        email: { value: "test@example.com", onChange: jest.fn() },
-        password: { value: "testpass", onChange: jest.fn() },
-      });
+      const props = new RegistrationFormPropsBuilder()
+        .withName("Test User")
+        .withEmail("test@example.com")
+        .withPassword("testpass")
+        .build();
+      const { page } = renderComponent(props);
 
       expect(page.getNameFieldValue()).toBe("Test User");
       expect(page.getEmailFieldValue()).toBe("test@example.com");

@@ -10,6 +10,7 @@ const config: Config = {
     "/src/__tests__/mocks/handlers.ts",
     "/src/__tests__/mocks/server.ts",
     "/src/__tests__/page-objects/",
+    "/src/__tests__/builders/",
   ],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
@@ -24,6 +25,7 @@ const config: Config = {
     "!src/**/__tests__/**",
     "!src/**/*.pact.test.ts",
     "!src/**/__tests__/page-objects/**",
+    "!src/**/__tests__/builders/**",
   ],
   coverageDirectory: "coverage",
   collectCoverage: true,
