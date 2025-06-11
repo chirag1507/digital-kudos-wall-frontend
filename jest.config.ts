@@ -5,7 +5,7 @@ const config: Config = {
   testEnvironment: "jsdom",
   roots: ["<rootDir>/src"],
   testMatch: ["**/__tests__/**/*.ts?(x)", "**/?(*.)+(spec|test).ts?(x)"],
-  testPathIgnorePatterns: ["/node_modules/", "/src/__tests__/mocks/"],
+  testPathIgnorePatterns: ["/node_modules/", "/src/__tests__/mocks/handlers.ts", "/src/__tests__/mocks/server.ts"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
     "\\.(css|less|scss|sass)$": "identity-obj-proxy",
@@ -21,7 +21,7 @@ const config: Config = {
   ],
   coverageDirectory: "coverage",
   collectCoverage: true,
-  setupFilesAfterEnv: ["<rootDir>/src/jest.setup.ts"], // Global setup
+  setupFilesAfterEnv: ["<rootDir>/src/setupComponentTests.ts"],
 };
 
 export default config;

@@ -1,5 +1,14 @@
-// Jest setup file for component tests
+// Jest setup file for component tests - includes all polyfills and MSW setup
+import "cross-fetch/polyfill";
+import "@testing-library/jest-dom";
 import { server } from "./__tests__/mocks/server";
+
+// Polyfills for React Router - simple approach to avoid require() linter errors
+if (typeof global.TextEncoder === "undefined") {
+  const { TextEncoder, TextDecoder } = eval("require")("util");
+  global.TextEncoder = TextEncoder;
+  global.TextDecoder = TextDecoder;
+}
 
 // Establish API mocking before all tests.
 beforeAll(() => server.listen());
