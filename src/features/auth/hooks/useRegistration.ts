@@ -1,21 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { RegisterUserUseCase } from "../application/RegisterUserUseCase";
-import { AuthServiceAdapter } from "../services/AuthServiceAdapter";
-import { UserRepositoryImpl } from "../repositories/UserRepository";
 import { RegisterUserPayload } from "../interfaces/AuthService";
-import { FetchHttpClient } from "@/services/FetchHttpClient";
 
-export const useRegistration = () => {
+// Define the dependency interface for the hook
+export interface UseRegistrationDependencies {
+  registerUserUseCase: RegisterUserUseCase;
+}
+
+export const useRegistration = ({ registerUserUseCase }: UseRegistrationDependencies) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-
-  const registerUserUseCase = useMemo(() => {
-    const httpClient = new FetchHttpClient();
-    const userRepository = new UserRepositoryImpl(httpClient);
-    const authService = new AuthServiceAdapter(userRepository);
-    return new RegisterUserUseCase(authService);
-  }, []);
 
   const handleSubmit = async (payload: RegisterUserPayload) => {
     setIsLoading(true);
