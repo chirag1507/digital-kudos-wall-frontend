@@ -25,8 +25,19 @@ export class FetchHttpClient implements HttpClient {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Server error (${response.status}): ${error}`);
+      const responseText = await response.text();
+
+      try {
+        const errorBody = JSON.parse(responseText);
+        const errorMessage = errorBody.message || "An unknown error occurred.";
+        throw new Error(errorMessage);
+      } catch (parseError) {
+        if (parseError instanceof SyntaxError) {
+          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        } else {
+          throw parseError;
+        }
+      }
     }
 
     return response.json();

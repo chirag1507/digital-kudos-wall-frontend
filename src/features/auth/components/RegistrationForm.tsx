@@ -33,13 +33,19 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
     <Box
       component="form"
       onSubmit={onSubmit}
+      noValidate
       sx={{
         display: "flex",
         flexDirection: "column",
         gap: 3,
         width: "100%",
-      }}>
-      {error && <Alert severity="error">{error}</Alert>}
+      }}
+      data-testid="registration-form">
+      {error && (
+        <Alert severity="error" data-testid="error-message">
+          {error}
+        </Alert>
+      )}
       {!isLoginMode && name && (
         <TextField
           id="name"
@@ -50,6 +56,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
           required={!isLoginMode}
           variant="outlined"
           fullWidth
+          inputProps={{ "data-testid": "name-input" }}
         />
       )}
       <TextField
@@ -61,6 +68,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
         required
         variant="outlined"
         fullWidth
+        inputProps={{ "data-testid": "email-input" }}
       />
       <TextField
         id="password"
@@ -71,15 +79,16 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
         required
         variant="outlined"
         fullWidth
+        inputProps={{ "data-testid": "password-input" }}
       />
-      <Button type="submit" variant="contained" disabled={isLoading} size="large" sx={{ mt: 2, py: 1.5 }}>
-        {isLoading
-          ? isLoginMode
-            ? "Signing In..."
-            : "Creating Account..."
-          : isLoginMode
-          ? "Sign In"
-          : "Create Account"}
+      <Button
+        type="submit"
+        variant="contained"
+        disabled={isLoading}
+        size="large"
+        sx={{ mt: 2, py: 1.5 }}
+        data-testid="register-button">
+        {isLoading ? "Processing..." : isLoginMode ? "Sign in" : "Create account"}
       </Button>
     </Box>
   );

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import RegistrationPage from "../RegistrationPage";
 import { useRegistration } from "../../hooks/useRegistration";
@@ -7,6 +7,13 @@ import { PageFactory } from "@/__tests__/page-objects";
 // Mock the useRegistration hook
 jest.mock("../../hooks/useRegistration", () => ({
   useRegistration: jest.fn(),
+}));
+
+// Mock useNavigate
+const mockNavigate = jest.fn();
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  useNavigate: () => mockNavigate,
 }));
 
 const mockUseRegistration = useRegistration as jest.Mock;
@@ -27,29 +34,14 @@ describe("Feature Test: User Registration", () => {
   });
 
   describe("when registration is successful", () => {
-    it("should display the registration success message", async () => {
+    it("should redirect to login page", async () => {
       // Arrange: Mock a successful registration state
       const mockHandleSubmit = jest.fn();
       mockUseRegistration.mockReturnValue({
         error: null,
         isLoading: false,
-        isSuccess: false, // Start as not successful
-        handleSubmit: mockHandleSubmit.mockImplementation(async () => {
-          // Simulate the state change that happens on success
-          mockUseRegistration.mockReturnValue({
-            error: null,
-            isLoading: false,
-            isSuccess: true, // Now it's successful
-            handleSubmit: mockHandleSubmit,
-          });
-          // Re-render is triggered by the hook's state change in a real app.
-          // Here we can re-render manually to simulate it for the test.
-          render(
-            <MemoryRouter initialEntries={["/register"]}>
-              <RegistrationPage />
-            </MemoryRouter>
-          );
-        }),
+        isSuccess: true, // Registration is successful
+        handleSubmit: mockHandleSubmit,
       });
 
       const { page } = renderComponent();
@@ -69,9 +61,13 @@ describe("Feature Test: User Registration", () => {
         password: user.password,
       });
 
-      // Assert: Verify the success message is displayed
-      expect(await screen.findByText("Registration Successful!")).toBeInTheDocument();
-      expect(screen.getByText(/Welcome to the Digital Kudos Wall/i)).toBeInTheDocument();
+      // Assert: Verify navigation to login page with state
+      expect(mockNavigate).toHaveBeenCalledWith("/login", {
+        state: {
+          justRegistered: true,
+          email: user.email,
+        },
+      });
     });
   });
 

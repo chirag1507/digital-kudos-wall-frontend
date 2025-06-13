@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import RegistrationForm from "../components/RegistrationForm";
 import { Box, Typography, Container, Card, CardContent, Divider, Link as MuiLink } from "@mui/material";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useRegistration } from "../hooks/useRegistration";
 import { RegisterUserUseCase } from "../application/RegisterUserUseCase";
 import { AuthServiceAdapter } from "../services/AuthServiceAdapter";
@@ -16,7 +16,11 @@ const useFormField = (initialValue: string) => {
 
 const RegistrationPage: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isLoginPage = location.pathname === "/login";
+
+  const justRegistered = location.state?.justRegistered;
+  const registeredEmail = location.state?.email;
 
   const name = useFormField("");
   const email = useFormField("");
@@ -33,11 +37,20 @@ const RegistrationPage: React.FC = () => {
     registerUserUseCase,
   });
 
+  useEffect(() => {
+    if (isSuccess && !isLoginPage) {
+      navigate("/login", {
+        state: {
+          justRegistered: true,
+          email: email.value,
+        },
+      });
+    }
+  }, [isSuccess, isLoginPage, navigate, email.value]);
+
   const handleFormSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (isLoginPage) {
-      // Simulate login for now
-      console.log("Simulating login...");
       // In a real scenario, you'd call a login use case here.
     } else {
       await handleSubmit({
@@ -47,23 +60,6 @@ const RegistrationPage: React.FC = () => {
       });
     }
   };
-
-  if (isSuccess) {
-    return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
-        <Card elevation={8} sx={{ borderRadius: 3 }}>
-          <CardContent sx={{ p: 6, textAlign: "center" }}>
-            <Typography variant="h4" component="h2" gutterBottom color="primary">
-              {isLoginPage ? "Welcome Back!" : "Registration Successful!"}
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              {isLoginPage ? `Welcome back, ${email.value}!` : `Welcome to the Digital Kudos Wall, ${email.value}!`}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Container>
-    );
-  }
 
   return (
     <Container maxWidth="sm" sx={{ mt: 8 }}>
@@ -84,6 +80,23 @@ const RegistrationPage: React.FC = () => {
         </Box>
 
         <CardContent sx={{ p: 6 }}>
+          {isLoginPage && justRegistered && registeredEmail && (
+            <Box sx={{ mb: 3 }}>
+              <Typography
+                variant="body1"
+                sx={{
+                  p: 2,
+                  backgroundColor: "success.light",
+                  color: "success.contrastText",
+                  borderRadius: 1,
+                  textAlign: "center",
+                }}
+                data-testid="confirmation-message">
+                Registration successful! A confirmation has been sent to {registeredEmail}
+              </Typography>
+            </Box>
+          )}
+
           <RegistrationForm
             name={name}
             email={email}

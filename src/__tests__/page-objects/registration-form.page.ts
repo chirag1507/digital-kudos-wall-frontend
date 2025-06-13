@@ -29,7 +29,7 @@ export class RegistrationFormPage extends BasePage {
   }
 
   get submitButton(): HTMLElement {
-    return this.getByRole("button", { name: /create account|sign in|creating account|signing in/i });
+    return this.getByRole("button", { name: /create account|sign in|processing/i });
   }
 
   get errorMessage(): HTMLElement | null {
@@ -141,7 +141,7 @@ export class RegistrationFormPage extends BasePage {
 
   shouldBeInLoadingState(): void {
     expect(this.isSubmitButtonDisabled()).toBe(true);
-    expect(this.getSubmitButtonText()).toMatch(/creating account|signing in/i);
+    expect(this.getSubmitButtonText()).toMatch(/processing/i);
   }
 
   shouldDisplayFieldValues(name?: string, email?: string, password?: string): void {
