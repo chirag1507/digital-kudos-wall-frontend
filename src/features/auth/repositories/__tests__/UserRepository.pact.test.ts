@@ -25,7 +25,7 @@ describe("UserRepository - User Registration Contract", () => {
         uponReceiving: "a request to register a new user",
         withRequest: {
           method: "POST",
-          path: "/users/register",
+          path: "/api/v1/users/register",
           headers: {
             "Content-Type": "application/json",
           },

@@ -11,6 +11,6 @@ export class UserRepositoryImpl implements UserRepository {
   }
 
   async register(payload: RegisterUserPayload): Promise<User> {
-    return this.httpClient.post<User>("/users/register", payload);
+    return this.httpClient.post<User>(`/api/v1/users/register`, payload);
   }
 }
