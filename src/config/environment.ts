@@ -25,14 +25,15 @@ const getApiBaseUrl = (): string => {
     return "http://localhost:3001";
   }
 
-  // In production/UAT
-  if (isProd()) {
-    return "/api";
-  }
-
   // Try to get from window.__ENV (set during build)
   if (typeof window !== "undefined" && window.__ENV?.VITE_API_URL) {
     return window.__ENV.VITE_API_URL;
+  }
+
+  // In production/UAT, use the same host but with port 3001
+  if (isProd() && typeof window !== "undefined") {
+    const currentUrl = new URL(window.location.href);
+    return `${currentUrl.protocol}//${currentUrl.hostname}:3001`;
   }
 
   // Development fallback
