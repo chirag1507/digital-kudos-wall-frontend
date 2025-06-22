@@ -52,8 +52,7 @@ describe("UserRepository - User Registration Contract", () => {
     afterEach(() => mockProvider.verify());
 
     it("should register successfully and return user data", async () => {
-      const baseUrl = mockProvider.mockService.baseUrl;
-      const httpClient = new FetchHttpClient(baseUrl);
+      const httpClient = new FetchHttpClient("http://127.0.0.1:1234");
       const userRepository = new UserRepositoryImpl(httpClient);
       const userData = {
         name: "pact-test-user",
