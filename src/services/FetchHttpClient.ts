@@ -4,12 +4,28 @@ export class FetchHttpClient implements HttpClient {
   private baseUrl: string;
 
   constructor(baseUrl: string = "") {
+    // Remove trailing slash if present
     this.baseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
   }
 
   private buildUrl(path: string): string {
-    const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
-    return `${this.baseUrl}/${normalizedPath}`;
+    // Ensure path starts with a slash
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+    // If baseUrl is empty, return normalized path
+    if (!this.baseUrl) {
+      return normalizedPath;
+    }
+
+    try {
+      // Try to construct a full URL
+      const url = new URL(normalizedPath, this.baseUrl);
+      return url.toString();
+    } catch {
+      // If baseUrl is not a valid URL, join paths manually
+      const base = this.baseUrl.endsWith("/") ? this.baseUrl.slice(0, -1) : this.baseUrl;
+      return `${base}${normalizedPath}`;
+    }
   }
 
   async get<T>(path: string): Promise<T> {
