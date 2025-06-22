@@ -21,14 +21,24 @@ FROM nginx:alpine
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration template
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Set default backend URL
 ENV BACKEND_URL=http://localhost:3001
 
+# Create a script to substitute environment variables and start nginx
+COPY <<EOF /docker-entrypoint.sh
+#!/bin/sh
+envsubst '\${BACKEND_URL}' < /etc/nginx/nginx.conf > /etc/nginx/nginx.conf.tmp
+mv /etc/nginx/nginx.conf.tmp /etc/nginx/nginx.conf
+exec nginx -g 'daemon off;'
+EOF
+
+RUN chmod +x /docker-entrypoint.sh
+
 # Expose port 80
 EXPOSE 80
 
-# Use the official Nginx Docker entrypoint which handles template substitution
-CMD ["nginx", "-g", "daemon off;"] 
+# Start Nginx using our entrypoint script
+CMD ["/docker-entrypoint.sh"] 
