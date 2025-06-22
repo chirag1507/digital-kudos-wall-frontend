@@ -7,6 +7,7 @@ import { RegisterUserUseCase } from "../application/RegisterUserUseCase";
 import { AuthServiceAdapter } from "../services/AuthServiceAdapter";
 import { UserRepositoryImpl } from "../repositories/UserRepository";
 import { FetchHttpClient } from "@/services/FetchHttpClient";
+import { config } from "@/config/environment";
 
 const useFormField = (initialValue: string) => {
   const [value, setValue] = useState(initialValue);
@@ -27,7 +28,7 @@ const RegistrationPage: React.FC = () => {
   const password = useFormField("");
 
   const registerUserUseCase = useMemo(() => {
-    const httpClient = new FetchHttpClient();
+    const httpClient = new FetchHttpClient(config.apiBaseUrl);
     const userRepository = new UserRepositoryImpl(httpClient);
     const authService = new AuthServiceAdapter(userRepository);
     return new RegisterUserUseCase(authService);

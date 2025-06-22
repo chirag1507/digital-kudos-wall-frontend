@@ -33,6 +33,10 @@ const getApiBaseUrl = (): string => {
   // In production/UAT, use the same host but with port 3001
   if (isProd() && typeof window !== "undefined") {
     const currentUrl = new URL(window.location.href);
+    // For UAT environment, use the direct IP/hostname
+    if (currentUrl.hostname === "13.201.16.118" || process.env.NODE_ENV === "uat") {
+      return "http://13.201.16.118:3001";
+    }
     return `${currentUrl.protocol}//${currentUrl.hostname}:3001`;
   }
 
