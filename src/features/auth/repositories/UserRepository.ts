@@ -14,6 +14,7 @@ export class UserRepositoryImpl implements UserRepository {
   }
 
   async register(payload: RegisterUserPayload): Promise<User> {
-    return this.httpClient.post<User>("users/register", payload);
+    const path = `${this.baseUrl}/users/register`.replace(/\/+/g, "/");
+    return this.httpClient.post<User>(path, payload);
   }
 }

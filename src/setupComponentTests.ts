@@ -10,13 +10,13 @@ configure({ asyncUtilTimeout: 5000 });
 
 // Polyfills for React Router - simple approach to avoid require() linter errors
 if (typeof global.TextEncoder === "undefined") {
-  const { TextEncoder, TextDecoder } = eval("require")("util");
-  global.TextEncoder = TextEncoder;
-  global.TextDecoder = TextDecoder;
+  const util = eval("require")("util") as { TextEncoder: typeof TextEncoder; TextDecoder: typeof TextDecoder };
+  Object.assign(global, {
+    TextEncoder: util.TextEncoder,
+    TextDecoder: util.TextDecoder,
+    act: act,
+  });
 }
-
-// Override the default act with React's act
-global.act = act;
 
 // Establish API mocking before all tests.
 beforeAll(() => server.listen());
