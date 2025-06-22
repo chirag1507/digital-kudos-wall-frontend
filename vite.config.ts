@@ -1,10 +1,11 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import injectEnv from "./scripts/inject-env";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), injectEnv()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -15,7 +16,7 @@ export default defineConfig({
     host: true,
     proxy: {
       "/users": {
-        target: "http://localhost:3001/api/v1",
+        target: "http://localhost:3001",
         changeOrigin: true,
       },
     },

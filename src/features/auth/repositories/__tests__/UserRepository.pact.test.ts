@@ -25,7 +25,7 @@ describe("UserRepository - User Registration Contract", () => {
         uponReceiving: "a request to register a new user",
         withRequest: {
           method: "POST",
-          path: "/api/v1/users/register",
+          path: "/users/register",
           headers: {
             "Content-Type": "application/json",
           },
@@ -52,7 +52,8 @@ describe("UserRepository - User Registration Contract", () => {
     afterEach(() => mockProvider.verify());
 
     it("should register successfully and return user data", async () => {
-      const httpClient = new FetchHttpClient(mockProvider.mockService.baseUrl);
+      const baseUrl = mockProvider.mockService.baseUrl;
+      const httpClient = new FetchHttpClient(baseUrl);
       const userRepository = new UserRepositoryImpl(httpClient);
       const userData = {
         name: "pact-test-user",

@@ -4,11 +4,17 @@ export class FetchHttpClient implements HttpClient {
   private baseUrl: string;
 
   constructor(baseUrl: string = "") {
-    this.baseUrl = baseUrl;
+    this.baseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  }
+
+  private buildUrl(path: string): string {
+    const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
+    return `${this.baseUrl}/${normalizedPath}`;
   }
 
   async get<T>(path: string): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${path}`);
+    const url = this.buildUrl(path);
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -16,7 +22,8 @@ export class FetchHttpClient implements HttpClient {
   }
 
   async post<T>(path: string, body: unknown): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${path}`, {
+    const url = this.buildUrl(path);
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

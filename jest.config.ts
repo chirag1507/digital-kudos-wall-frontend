@@ -30,6 +30,17 @@ const config: Config = {
   coverageDirectory: "coverage",
   collectCoverage: true,
   setupFilesAfterEnv: ["<rootDir>/src/setupComponentTests.ts"],
+  transform: {
+    "^.+\\.tsx?$": [
+      "ts-jest",
+      {
+        useESM: false,
+      },
+    ],
+  },
+  testEnvironmentOptions: {
+    customExportConditions: [""],
+  },
 };
 
 export default config;
