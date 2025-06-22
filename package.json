@@ -6,13 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:uat": "tsc && vite build --mode uat",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "test": "npm run test:component",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "test:contract": "jest --testPathPattern=pact.test.ts --testEnvironment=node --testTimeout=30000",
     "test:component": "jest --testNamePattern='^(?!.*pact).*'",
     "publish:pacts": "node scripts/publish-pacts.js",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:check": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --format=json"
   },
   "dependencies": {

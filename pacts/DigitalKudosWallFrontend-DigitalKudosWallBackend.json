@@ -16,7 +16,7 @@
           "Content-Type": "application/json"
         },
         "method": "POST",
-        "path": "/api/v1/users/register"
+        "path": "/users/register"
       },
       "response": {
         "body": {
