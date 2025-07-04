@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLogin } from "../hooks/useLogin";
 import { LoginCredentials } from "../types/LoginCredentials";
 import { Container, Paper, Typography, TextField, Button, Box, Link, Alert } from "@mui/material";
-import { useAuthContext } from "../providers/AuthProvider";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 export const LoginPage = () => {
   const navigate = useNavigate();

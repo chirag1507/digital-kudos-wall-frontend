@@ -3,7 +3,7 @@ import RegistrationForm from "../components/RegistrationForm";
 import { Box, Typography, Container, Card, CardContent, Divider, Link as MuiLink } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useRegistration } from "../hooks/useRegistration";
-import { useAuthContext } from "../providers/AuthProvider";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 const useFormField = (initialValue: string) => {
   const [value, setValue] = useState(initialValue);
