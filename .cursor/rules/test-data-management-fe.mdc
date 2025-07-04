@@ -1,10 +1,18 @@
-# Standard Operating Procedure: Frontend Test Data Management
+---
+description: Enforce non-negotiable standards for test data management for tests in the Digital Kudos Wall Frontend project
+globs:
+  - "digital-kudos-wall-frontend/src/**/*"
+alwaysApply: false
+---
 
-**Status:** Mandatory
+# 🧪 Standard Operating Procedure: Frontend Test Data Management
+
+**Status:** Mandatory  
 **Version:** 1.0
-**Date:** {{CURRENT_DATE}}
 
 **NON-NEGOTIABLE STANDARD:** Adherence to this SOP is mandatory for managing test data in frontend automated tests, particularly for Component Tests. Deviations are not permitted without explicit architectural review and approval.
+
+---
 
 ## 1. Purpose
 
@@ -34,7 +42,7 @@ This SOP defines the standards for creating and managing test data (i.e., compon
 
 A builder should provide a fluent interface for customization.
 
-**Example: `registration-form-props.builder.ts`**
+**Example: `src/__tests__/builders/registration-form-props.builder.ts`**
 
 ```typescript
 export class RegistrationFormPropsBuilder {
@@ -98,10 +106,6 @@ it("should display loading states", () => {
   page.shouldBeInLoadingState();
 });
 ```
-
-## 4. Related SOPs
-
-- `SOP-ComponentTests.md`
 
 ## 5. Enforcement
 

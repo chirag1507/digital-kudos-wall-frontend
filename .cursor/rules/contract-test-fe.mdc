@@ -1,6 +1,26 @@
-# SOP: Contract Testing (Consumer)
+---
+description: Enforce non-negotiable standards for consumer driven contract tests in the Digital Kudos Wall Frontend project
+globs:
+  - "digital-kudos-wall-frontend/src/**/*"
+alwaysApply: false
+---
 
-This document outlines the **non-negotiable** principles and practices for writing contract tests in the Digital Kudos Wall project. As the consumer, we are responsible for clearly and accurately defining the expectations we have of our providers.
+# 🧪 Standard Operating Procedure: Consumer Driven Contract Tests
+
+**Status:** Mandatory  
+**Version:** 1.0
+
+---
+
+## 1. Purpose
+
+Adherence to this SOP is mandatory for all Frontend Consumer Driven Contract Tests. Deviations are not permitted without explicit architectural review and approval. As the consumer, we are responsible for clearly and accurately defining the expectations we have of our providers.
+
+This SOP defines the standards for writing Frontend Contract Tests within the Digital Kudos Wall frontend application.
+
+## 2. Scope
+
+This SOP applies to all contract tests written for the frontend application.
 
 ### Guiding Principles
 
@@ -27,3 +47,7 @@ This document outlines the **non-negotiable** principles and practices for writi
 4.  **Do Not Commit Pact Files**: The `/pacts` directory is a build artifact directory. It **must** be included in the `.gitignore` file and **must not** be committed to the repository.
 5.  **Test Before You Push**: Developers **must** run `npm run test:contract` locally to ensure their changes correctly generate a pact file before pushing their code.
 6.  **Communicate Breaking Changes**: While the pipeline provides the technical feedback, a contract change that will break the provider **should** be communicated to the provider team as a professional courtesy. The pipeline is the safety net, not a substitute for collaboration.
+
+## Example Implementation
+
+- Contract Test: `src/features/auth/repositories/UserRepository.pact.test.ts`

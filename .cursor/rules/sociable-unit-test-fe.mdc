@@ -1,10 +1,16 @@
-# Standard Operating Procedure: Frontend Sociable Unit Tests
+---
+description: Enforce non-negotiable standards for sociable unit tests in the Digital Kudos Wall Frontend project
+globs:
+  - "digital-kudos-wall-frontend/src/**/*"
+alwaysApply: false
+---
 
-**Status:** Mandatory
+# 🧪 Standard Operating Procedure: Sociable Unit Tests
+
+**Status:** Mandatory  
 **Version:** 1.0
-**Date:** {{CURRENT_DATE}}
 
-**NON-NEGOTIABLE STANDARD:** Adherence to this SOP is mandatory for all Frontend Sociable Unit Tests. Deviations are not permitted without explicit architectural review and approval.
+---
 
 ## 1. Purpose
 
@@ -45,7 +51,7 @@ This SOP applies to all tests for the frontend's application logic layer, specif
 
 - **Standard:** All tests MUST follow the Arrange-Act-Assert (AAA) pattern.
 
-### Example: `useRegistration.test.ts`
+### Example: `src/features/auth/hooks/useRegistration.test.ts`
 
 ```typescript
 import { renderHook, act } from "@testing-library/react";
@@ -89,11 +95,6 @@ describe("Sociable Unit Test: useRegistration Hook", () => {
   });
 });
 ```
-
-## 6. Related SOPs
-
-- `SOP-ComponentTests.md`
-- `SOP-TestDataManagement-FE.md`
 
 ## 7. Enforcement
 

@@ -1,14 +1,22 @@
-# Standard Operating Procedure: Frontend Clean Architecture
+---
+description: Enforce non-negotiable standards for clean architecture in the Digital Kudos Wall Frontend project
+globs:
+  - "digital-kudos-wall-frontend/src/**/*"
+alwaysApply: false
+---
 
-**Status:** Mandatory
-**Version:** 2.0
-**Date:** {{CURRENT_DATE}}
+# 🧪 Standard Operating Procedure: Clean Architecture
 
-**NON-NEGOTIABLE STANDARD:** Adherence to this SOP is mandatory for all frontend features. Deviations are not permitted without explicit architectural review and approval. This is to ensure a scalable, maintainable, and testable codebase aligned with our long-term vision for micro-frontends and a Product Operating Model.
+**Status:** Mandatory  
+**Version:** 1.0
 
-## 1. Purpose
+## 📌 Purpose
+
+Adherence to this SOP is mandatory for all frontend features. Deviations are not permitted without explicit architectural review and approval. This is to ensure a scalable, maintainable, and testable codebase aligned with our long-term vision for micro-frontends and a Product Operating Model.
 
 This SOP defines the standards for implementing a Clean Architecture in the Digital Kudos Wall frontend application. The primary goal is to decouple business logic from the UI framework (React), enabling independent development, testing, and evolution of the core application functionality.
+
+---
 
 ## 2. Scope
 
@@ -47,6 +55,7 @@ All frontend code MUST be organized into the following layers. The fundamental r
 - **Content:** Core business objects and data structures. In TypeScript, these are typically `type` or `interface` definitions.
 - **Location:** `src/features/{feature-name}/types/`
 - **Dependencies:** None.
+- **Example Implementation:** `src/features/auth/types/User.ts`.
 - **Example:**
   ```typescript
   // src/features/auth/types/User.ts
@@ -61,11 +70,16 @@ All frontend code MUST be organized into the following layers. The fundamental r
 
 - **Standard:** This is the heart of the application logic. It defines the operations the application can perform and the contracts (interfaces) for any external dependencies.
 - **Content:**
-  - **Use Cases:** Contains application-specific orchestration logic. Each use case MUST be a `class` that encapsulates a single user interaction flow (e.g., `RegisterUserUseCase`). It MUST NOT contain any reference to the UI framework or specific data-fetching libraries. It depends on service interfaces to interact with outer layers.
+  - **Use Cases:** Contains application-specific orchestration logic. Each use case MUST be a `class` that encapsulates a single user interaction flow (e.g., `RegisterUserUseCase`). It MUST NOT contain any reference to the UI framework or specific data-fetching libraries. It depends on service interfaces to interact with outer layers. Use Cases use composition to get its job done. Use Responsibility Driven Design to encapsulate objects and it's roles and responsibilities.
   - **Service Interfaces:** These are the contracts that Use Cases depend on. They define what a service can do, but not how it does it. This is key to inversion of control.
 - **Location:**
   - Use Cases: `src/features/{feature-name}/application/`
   - Service Interfaces: `src/features/{feature-name}/interfaces/`
+  - Repository Interfaces: `src/features/{feature-name}/interfaces/`
+  - **Example Implementation:**:
+    - Use Case: `src/features/auth/application/use-cases/register-user/RegisterUserUseCase.ts`
+    - Service Interface: `src/features/auth/application/interfaces/AuthService.ts`
+    - Repository Interface: `src/features/auth/application/interfaces/UserRepository.ts`
 - **Example:**
 
   ```typescript
@@ -74,6 +88,11 @@ All frontend code MUST be organized into the following layers. The fundamental r
   export type RegisterUserPayload = Omit<User, "id"> & { password: string };
   export interface AuthService {
     registerUser(payload: RegisterUserPayload): Promise<User>;
+  }
+
+  // src/features/auth/interfaces/UserRepository.ts
+  export interface UserRepository {
+    register(payload: RegisterUserPayload): Promise<User>;
   }
 
   // src/features/auth/application/RegisterUserUseCase.ts
@@ -101,8 +120,13 @@ All frontend code MUST be organized into the following layers. The fundamental r
   - Hooks: `src/features/{feature-name}/hooks/`
   - Repositories: `src/features/{feature-name}/repositories/`
   - Service Adapters: `src/features/{feature-name}/services/`
-  - Repository Interfaces: `src/features/{feature-name}/interfaces/`
 - **Dependencies:** Depends on Use Cases (inward) and specific frameworks (outward).
+- **Example Implementation:**:
+
+  - Hooks: `src/features/auth/hooks/useRegistration.ts`
+  - Repositories: `src/features/auth/repositories/UserRepository.ts`
+  - Service Adapters: `src/features/auth/services/AuthServiceAdapter.ts`
+
 - **Example:**
 
   ```typescript
@@ -145,6 +169,11 @@ All frontend code MUST be organized into the following layers. The fundamental r
   - Dumb Components: `src/features/{feature-name}/components/`
   - Generic Services: `src/services/` (e.g., `FetchHttpClient.ts`)
   - Generic Interfaces: `src/shared/interfaces/`
+- **Example Implementation:**:
+  - Page Component: `src/features/auth/routes/RegistrationPage.tsx`
+  - Dumb Component: `src/features/auth/components/RegistrationForm.tsx`
+  - Generic Services: `src/services/FetchHttpClient.ts`
+  - Generic Interfaces: `src/shared/interfaces/HttpClient.ts`
 
 ## 4. Directory Structure (Non-Negotiable)
 

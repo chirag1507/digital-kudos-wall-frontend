@@ -1,26 +1,34 @@
-# Standard Operating Procedure: Frontend Component Tests
+---
+description: Enforce non-negotiable standards for component tests in the Digital Kudos Wall Frontend project
+globs:
+  - "digital-kudos-wall-frontend/src/**/*"
+alwaysApply: false
+---
 
-**Status:** Mandatory
-**Version:** 1.1
-**Date:** {{CURRENT_DATE}}
+# 🧪 Standard Operating Procedure: Frontend Component Tests
 
-**NON-NEGOTIABLE STANDARD:** Adherence to this SOP is mandatory for all Frontend Component Tests. Deviations are not permitted without explicit architectural review and approval.
+**Status:** Mandatory  
+**Version:** 1.0
+
+---
 
 ## Table of Contents
 
-1. [Purpose](#1-purpose)
-2. [Scope](#2-scope)
-3. [Definitions](#3-definitions)
-4. [Key Principles (Non-Negotiable)](#4-key-principles-non-negotiable)
-5. [Page Object Pattern (Mandatory)](#5-page-object-pattern-mandatory)
-6. [Test Structure (Arrange-Act-Assert)](#6-test-structure-arrange-act-assert)
-7. [What NOT to Test (Implementation Details)](#7-what-not-to-test-implementation-details)
-8. [Modern Test Pyramid Alignment](#8-modern-test-pyramid-alignment)
-9. [Test Categories and Examples](#9-test-categories-and-examples)
-10. [Forbidden Test Types](#10-forbidden-test-types)
-11. [Tools and Setup](#11-tools-and-setup)
+1. [Purpose](mdc:digital-kudos-wall/#1-purpose)
+2. [Scope](mdc:digital-kudos-wall/#2-scope)
+3. [Definitions](mdc:digital-kudos-wall/#3-definitions)
+4. [Key Principles (Non-Negotiable)](mdc:digital-kudos-wall/#4-key-principles-non-negotiable)
+5. [Page Object Pattern (Mandatory)](mdc:digital-kudos-wall/#5-page-object-pattern-mandatory)
+6. [Test Structure (Arrange-Act-Assert)](mdc:digital-kudos-wall/#6-test-structure-arrange-act-assert)
+7. [What NOT to Test (Implementation Details)](mdc:digital-kudos-wall/#7-what-not-to-test-implementation-details)
+8. [Modern Test Pyramid Alignment](mdc:digital-kudos-wall/#8-modern-test-pyramid-alignment)
+9. [Test Categories and Examples](mdc:digital-kudos-wall/#9-test-categories-and-examples)
+10. [Forbidden Test Types](mdc:digital-kudos-wall/#10-forbidden-test-types)
+11. [Tools and Setup](mdc:digital-kudos-wall/#11-tools-and-setup)
 
 ## 1. Purpose
+
+Adherence to this SOP is mandatory for all Frontend Component Tests. Deviations are not permitted without explicit architectural review and approval.
 
 This SOP defines the standards for writing Frontend Component Tests within the Digital Kudos Wall frontend application. The primary goal is to ensure **fast developer feedback** and **granular error detection** by testing component behavior, not implementation details.
 
@@ -108,7 +116,6 @@ const mockProps = {
 
 - **Standard:** Tests MUST interact with components through user-facing interfaces (labels, roles, text content) NOT through:
   - CSS selectors or classes
-  - Data-testid attributes (use sparingly, only when necessary)
   - Component internal methods or state
   - HTML element types or attributes
 
