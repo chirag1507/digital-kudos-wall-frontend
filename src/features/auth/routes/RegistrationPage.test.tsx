@@ -1,11 +1,12 @@
 import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import RegistrationPage from "../RegistrationPage";
-import { useRegistration } from "../../hooks/useRegistration";
+import RegistrationPage from "./RegistrationPage";
+import { useRegistration } from "../hooks/useRegistration";
 import { PageFactory } from "@/__tests__/page-objects";
+import { AuthProvider } from "../providers/AuthProvider";
 
 // Mock the useRegistration hook
-jest.mock("../../hooks/useRegistration", () => ({
+jest.mock("../hooks/useRegistration", () => ({
   useRegistration: jest.fn(),
 }));
 
@@ -22,7 +23,9 @@ describe("Feature Test: User Registration", () => {
   const renderComponent = (initialRoute = "/register") => {
     const { container } = render(
       <MemoryRouter initialEntries={[initialRoute]}>
-        <RegistrationPage />
+        <AuthProvider>
+          <RegistrationPage />
+        </AuthProvider>
       </MemoryRouter>
     );
     const page = PageFactory.createRegistrationFormPage(container);

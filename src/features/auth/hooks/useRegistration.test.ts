@@ -1,10 +1,10 @@
 import { renderHook, act } from "@testing-library/react";
-import { useRegistration } from "../useRegistration";
-import { RegisterUserUseCase } from "../../application/RegisterUserUseCase";
-import { RegisterUserPayload } from "../../interfaces/AuthService";
-import { User } from "../../types/User";
-import { AuthServiceAdapter } from "../../services/AuthServiceAdapter";
-import { UserRepository } from "../../interfaces/UserRepository";
+import { useRegistration } from "./useRegistration";
+import { RegisterUserUseCase } from "../application/use-cases/register-user/RegisterUserUseCase";
+import { RegisterUserPayload } from "../interfaces/AuthService";
+import { User } from "../types/User";
+import { AuthServiceAdapter } from "../services/AuthServiceAdapter";
+import { UserRepository } from "../interfaces/UserRepository";
 
 // 1. Mock the repository (the true boundary)
 const mockUserRepository: jest.Mocked<UserRepository> = {

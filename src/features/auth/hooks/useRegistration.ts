@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RegisterUserUseCase } from "../application/RegisterUserUseCase";
+import { RegisterUserUseCase } from "../application/use-cases/register-user/RegisterUserUseCase";
 import { RegisterUserPayload } from "../interfaces/AuthService";
 
 // Define the dependency interface for the hook

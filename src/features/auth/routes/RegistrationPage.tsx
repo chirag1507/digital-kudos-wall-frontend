@@ -1,13 +1,9 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import RegistrationForm from "../components/RegistrationForm";
 import { Box, Typography, Container, Card, CardContent, Divider, Link as MuiLink } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useRegistration } from "../hooks/useRegistration";
-import { RegisterUserUseCase } from "../application/RegisterUserUseCase";
-import { AuthServiceAdapter } from "../services/AuthServiceAdapter";
-import { UserRepositoryImpl } from "../repositories/UserRepository";
-import { FetchHttpClient } from "@/services/FetchHttpClient";
-import { config } from "@/config/environment";
+import { useAuthContext } from "../providers/AuthProvider";
 
 const useFormField = (initialValue: string) => {
   const [value, setValue] = useState(initialValue);
@@ -27,13 +23,7 @@ const RegistrationPage: React.FC = () => {
   const email = useFormField("");
   const password = useFormField("");
 
-  const registerUserUseCase = useMemo(() => {
-    const httpClient = new FetchHttpClient(config.apiBaseUrl);
-    const userRepository = new UserRepositoryImpl(httpClient);
-    const authService = new AuthServiceAdapter(userRepository);
-    return new RegisterUserUseCase(authService);
-  }, []);
-
+  const { registerUserUseCase } = useAuthContext();
   const { error, isLoading, isSuccess, handleSubmit } = useRegistration({
     registerUserUseCase,
   });

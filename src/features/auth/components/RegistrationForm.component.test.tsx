@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import RegistrationForm from "../RegistrationForm";
+import RegistrationForm from "./RegistrationForm";
 import { PageFactory } from "@/__tests__/page-objects";
 import { RegistrationFormPropsBuilder } from "@/__tests__/builders/registration-form-props.builder";
 
