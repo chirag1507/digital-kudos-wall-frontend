@@ -1,58 +1,27 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { MemoryRouter } from "react-router-dom";
-import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
-import { Routes, Route, Link } from "react-router-dom";
-import KudosWallPage from "../features/kudos/routes/KudosWallPage";
-import RegistrationPage from "../features/auth/routes/RegistrationPage";
+import App from "../App";
+import { AuthProvider } from "@/features/auth/providers/AuthProvider";
 
-const AppContent = () => (
-  <Box sx={{ flexGrow: 1 }}>
-    <AppBar
-      position="static"
-      sx={{
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        boxShadow: "none",
-      }}>
-      <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: "bold" }}>
-          Digital Kudos Wall Platform
-        </Typography>
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button color="inherit" component={Link} to="/kudos">
-            Kudos Wall
-          </Button>
-          <Button color="inherit" component={Link} to="/">
-            Register
-          </Button>
-          <Button color="inherit" component={Link} to="/login">
-            Login
-          </Button>
-        </Box>
-      </Toolbar>
-    </AppBar>
+// Mock the router to avoid double router issue
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  BrowserRouter: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
-    <main>
-      <Routes>
-        <Route path="/" element={<RegistrationPage />} />
-        <Route path="/register" element={<RegistrationPage />} />
-        <Route path="/login" element={<RegistrationPage />} />
-        <Route path="/kudos" element={<KudosWallPage />} />
-      </Routes>
-    </main>
-  </Box>
-);
+const renderApp = (initialRoute: string = "/") => {
+  window.history.pushState({}, "", initialRoute);
+  return render(
+    <MemoryRouter initialEntries={[initialRoute]}>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </MemoryRouter>
+  );
+};
 
 describe("Component Test: App", () => {
-  // Helper to render App content with Router context (isolated testing)
-  const renderApp = (initialRoute = "/") => {
-    return render(
-      <MemoryRouter initialEntries={[initialRoute]}>
-        <AppContent />
-      </MemoryRouter>
-    );
-  };
-
   test("should render main application layout", () => {
     renderApp();
 
@@ -80,5 +49,36 @@ describe("Component Test: App", () => {
 
     // Test that the default route renders RegistrationPage content
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+  });
+
+  test("should render login page when navigating to /login", () => {
+    renderApp("/login");
+
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+  });
+
+  test("should render kudos wall page when navigating to /kudos", async () => {
+    renderApp("/kudos");
+
+    // First verify loading state
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+
+    // Wait for loading to finish and content to appear
+    await waitFor(
+      () => {
+        expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+      },
+      { timeout: 2000 }
+    );
+
+    // Verify page heading
+    expect(screen.getByRole("heading", { name: /kudos wall/i, level: 1 })).toBeInTheDocument();
+
+    // Verify kudos cards are rendered with specific content
+    expect(screen.getByText("Outstanding work on the Q1 campaign!")).toBeInTheDocument();
+    expect(screen.getByText("Incredible job debugging the production issue!")).toBeInTheDocument();
+    expect(screen.getByText("Phenomenal work closing the enterprise deal!")).toBeInTheDocument();
   });
 });

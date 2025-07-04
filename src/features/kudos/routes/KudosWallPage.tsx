@@ -57,7 +57,7 @@ const KudosWallPage: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4 }} data-testid="kudos-wall-container">
       <Typography variant="h4" component="h1" gutterBottom>
         Kudos Wall
       </Typography>
