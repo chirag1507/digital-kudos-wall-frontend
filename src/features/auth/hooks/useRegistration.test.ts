@@ -4,15 +4,20 @@ import { RegisterUserUseCase } from "../application/use-cases/register-user/Regi
 import { RegisterUserPayload } from "../interfaces/AuthService";
 import { User } from "../types/User";
 import { AuthServiceAdapter } from "../services/AuthServiceAdapter";
-import { UserRepository } from "../interfaces/UserRepository";
+import { UserRepository } from "../repositories/UserRepository";
+import { HttpClient } from "@/shared/interfaces/HttpClient";
 
-// 1. Mock the repository (the true boundary)
-const mockUserRepository: jest.Mocked<UserRepository> = {
-  register: jest.fn(),
+// 1. Mock the HTTP client (the true boundary)
+const mockHttpClient: jest.Mocked<HttpClient> = {
+  get: jest.fn(),
+  post: jest.fn(),
 };
 
-// 2. Use real collaborators for the application logic
-const authService = new AuthServiceAdapter(mockUserRepository);
+// 2. Use real UserRepository with mocked HTTP client
+const userRepository = new UserRepository(mockHttpClient);
+
+// 3. Use real collaborators for the application logic
+const authService = new AuthServiceAdapter(userRepository);
 const registerUserUseCase = new RegisterUserUseCase(authService);
 
 describe("Sociable Unit Test: useRegistration Hook", () => {
@@ -33,8 +38,8 @@ describe("Sociable Unit Test: useRegistration Hook", () => {
   });
 
   it("should handle successful registration", async () => {
-    // Arrange: Mock the repository's response
-    mockUserRepository.register.mockResolvedValue(mockUser);
+    // Arrange: Mock the HTTP client's response
+    mockHttpClient.post.mockResolvedValue(mockUser);
 
     const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
 
@@ -47,13 +52,13 @@ describe("Sociable Unit Test: useRegistration Hook", () => {
     expect(result.current.isLoading).toBe(false);
     expect(result.current.isSuccess).toBe(true);
     expect(result.current.error).toBeNull();
-    expect(mockUserRepository.register).toHaveBeenCalledWith(payload);
+    expect(mockHttpClient.post).toHaveBeenCalledWith("/users/register", payload);
   });
 
   it("should handle registration failure", async () => {
     // Arrange
     const errorMessage = "Email already in use";
-    mockUserRepository.register.mockRejectedValue(new Error(errorMessage));
+    mockHttpClient.post.mockRejectedValue(new Error(errorMessage));
 
     const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
 
@@ -66,12 +71,12 @@ describe("Sociable Unit Test: useRegistration Hook", () => {
     expect(result.current.isLoading).toBe(false);
     expect(result.current.isSuccess).toBe(false);
     expect(result.current.error).toBe(errorMessage);
-    expect(mockUserRepository.register).toHaveBeenCalledWith(payload);
+    expect(mockHttpClient.post).toHaveBeenCalledWith("/users/register", payload);
   });
 
   it("should set loading state during registration", async () => {
     // Arrange
-    mockUserRepository.register.mockReturnValue(new Promise(() => {}));
+    mockHttpClient.post.mockReturnValue(new Promise(() => {}));
 
     const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
 
