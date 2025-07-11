@@ -1,5 +1,5 @@
 ---
-description: Enforce non-negotiable standards for sociable unit tests in the Digital Kudos Wall Frontend project
+description: Enforce non-negotiable standards for sociable unit tests in the Digital Kudos Wall Frontend project.
 globs:
   - "digital-kudos-wall-frontend/src/**/*"
 alwaysApply: false
@@ -10,92 +10,161 @@ alwaysApply: false
 **Status:** Mandatory  
 **Version:** 1.0
 
+**NON-NEGOTIABLE STANDARD:** Adherence to this SOP is mandatory for all Sociable Unit Tests. Deviations are not permitted without explicit architectural review and approval.
+
+## 📌 Purpose
+
+This SOP defines the standards for writing Sociable Unit Tests within the Digital Kudos Wall frontend application. The primary goal is to ensure that our use cases (application services) and hooks are tested effectively, verifying their behavior and interactions while remaining decoupled from internal implementation details and fast to execute.
+
 ---
 
-## 1. Purpose
+## Scope
 
-This SOP defines the standards for writing Sociable Unit Tests for the frontend application. The goal is to verify the collaboration between different parts of our application logic (hooks, use cases, services) as a single unit, ensuring they work together correctly to produce the state our UI depends on.
+This SOP applies to all unit tests written for the application layer, specifically targeting Use Case classes and custom hooks.
 
-## 2. Scope
+## Definitions
 
-This SOP applies to all tests for the frontend's application logic layer, specifically targeting custom hooks that orchestrate business logic and interact with services or repositories.
+- **Sociable Unit Test:** A test that verifies the behavior of a "unit" (e.g., a use case class or custom hook) by allowing it to collaborate with its direct, genuine dependencies (like value objects or domain entities) but uses Test Doubles for dependencies that cross process boundaries or represent significant external infrastructure (e.g., HTTP clients, external APIs, browser APIs).
+- **Unit:** In the context of this SOP, a "unit" typically refers to a Use Case class, custom hook, or application service and its closely related domain objects (Entities, Value Objects) that it orchestrates.
 
-## 3. Definitions
+## Key Principles (Non-Negotiable)
 
-- **Sociable Unit Test:** A test that verifies a "unit" of frontend application logic by allowing it to collaborate with its direct, genuine dependencies (e.g., a use case calling a service) and using Test Doubles **only** for dependencies that cross the application boundary (e.g., a repository making an HTTP call).
-- **Unit:** In this context, a "unit" refers to a custom hook and the entire graph of objects it depends on, down to the boundary that communicates with the outside world.
+### Behavior-Driven
 
-## 4. Key Principles (Non-Negotiable)
+- **Standard:** Tests MUST verify the observable behavior of the use case or hook from the perspective of a client calling its public interface (e.g., the `execute` method for use cases, or the returned values/functions for hooks).
+- **Focus:** Test cases should cover primary success scenarios, key business rule enforcement (including failure scenarios like validation errors or domain errors), and significant interactions with direct collaborators.
+- **Example:**
+  - `it("should successfully register a new user", ...)`
+  - `it("should return error when user already exists", ...)`
+  - `it("should validate email format", ...)`
+  - `it("should update loading state during login", ...)`
 
-### 4.1. Test the Unit, Not the Class
+### Collaboration Strategy
 
-- **Standard:** The test should treat the hook and its collaborators as a single logical component. We test the behavior of this unit, not the individual classes in isolation.
-- **Rationale:** This provides higher confidence that the application logic works as a whole, catching integration errors between internal classes that traditional unit tests would miss.
+- **Standard A (Real Collaborators):** Use REAL instances of domain objects (Entities, Value Objects) that the use case or hook directly creates or orchestrates.
 
-### 4.2. Mock Only at the Boundary
+  - **Rationale:** The behavior of these core domain objects is integral to the use case's functionality. Mocking them would obscure the true behavior being tested.
+  - **Example:** When testing `RegisterUserUseCase`, real `Email` and `Password` value objects are created and used.
+    ```typescript
+    // From a test setup for RegisterUserUseCase
+    const emailValueObject = Email.create("test@example.com").getValue();
+    const passwordValueObject = Password.create("ValidPass123!").getValue();
+    const registrationData = {
+      email: emailValueObject,
+      password: passwordValueObject,
+    };
+    ```
 
-- **Standard:** Test Doubles (mocks) **MUST** only be used at the boundary of the sociable unit. For a frontend application, this is typically the **Repository layer**, which is responsible for I/O (e.g., HTTP requests).
-- **Rationale:** This is the core principle. Mocking internal collaborators (like the use case or service) leads to brittle tests that break during refactoring and fails to test the actual integration. By using real collaborators, we verify their interactions are correct.
+- **Standard B (Test Doubles for Boundaries):** Use Test Doubles (Stubs or Spies, see `SOP-TestDoubles.md`) for dependencies that represent interfaces to:
+  - Infrastructure concerns (e.g., `HttpClient`, `AuthService`).
+  - External systems or out-of-process communication.
+  - Browser APIs (e.g., `localStorage`, `sessionStorage`).
+  - **Rationale:** This ensures tests are fast, deterministic, and focused on the use case logic rather than the implementation details or reliability of external components. The contracts of these interfaces are tested separately (e.g., by Narrow Integration Tests for HTTP client implementations).
+  - **Example:**
+    ```typescript
+    // In beforeEach for RegisterUserUseCase tests
+    httpClient = {
+      post: jest.fn(),
+      get: jest.fn(),
+    };
+    authService = {
+      storeToken: jest.fn(),
+      clearToken: jest.fn(),
+    };
+    useCase = new RegisterUserUseCase(httpClient, authService);
+    ```
 
-### 4.3. Drive Tests via the Public Interface
+### Decoupling from Structure, Coupling to Behavior
 
-- **Standard:** Tests MUST be driven by calling the public interface of the hook (e.g., the `handleSubmit` function it returns) and asserting on its observable output (e.g., the `isLoading`, `isSuccess`, and `error` states it returns).
-- **Rationale:** This ensures tests are behavior-driven and decoupled from the internal implementation details of the hook or its collaborators.
+- **Standard:** Tests MUST interact with the Use Case or Hook _only_ through its public API. Tests MUST NOT rely on internal methods, properties, or implementation structure of the Use Case or Hook.
+- **Rationale:** This ensures that refactoring the internal implementation of a Use Case or Hook (without changing its observable behavior) does not break its tests. This is a core principle of maintainable tests.
+- **Verification:** Assertions should be made on:
+  1.  The `Result` object returned by the use case's `execute` method.
+  2.  The hook's returned values and state changes.
+  3.  The interactions with Test Doubles (as per `SOP-TestDoubles.md`), verifying that the correct methods on collaborators were called with expected arguments.
 
-### 4.4. Test in a Headless Environment
+### Speed and Determinism
 
-- **Standard:** Tests for hooks MUST use the `renderHook` utility from `@testing-library/react`. They MUST NOT render any actual UI components.
-- **Rationale:** This ensures the tests are extremely fast and focused solely on the application logic, not on the UI's reaction to it (which is the job of a Feature Test).
+- **Standard:** Sociable Unit Tests MUST be fast and deterministic.
+- **Rationale:** Fast tests are run frequently, providing quick feedback. Determinism ensures reliability.
+- **Implementation:** Achieved by using in-memory Test Doubles for I/O-bound or slow dependencies.
 
-## 5. Test Structure (Arrange-Act-Assert)
+## Test Structure (Arrange-Act-Assert)
 
 - **Standard:** All tests MUST follow the Arrange-Act-Assert (AAA) pattern.
 
-### Example: `src/features/auth/hooks/useRegistration.test.ts`
+  - **Arrange:** Set up the preconditions, including instantiating the use case or setting up hook test environment, preparing its dependencies (real objects or configuring test doubles).
+  - **Act:** Execute the public method on the use case or trigger the hook behavior that is being tested.
+  - **Assert:** Verify the outcome by checking the returned `Result` object, hook state, and/or asserting interactions with test doubles.
+
+  ```typescript
+  it("should successfully register a new user", async () => {
+    // Arrange
+    const email = "test@example.com";
+    const password = "ValidPass123!";
+    // Configure Test Doubles (Stubs/Spies)
+    httpClient.post = jest.fn().mockResolvedValue({
+      data: { id: 1, email, token: "mock-token" },
+      status: 201,
+    });
+    authService.storeToken = jest.fn().mockResolvedValue(undefined);
+
+    // Act
+    const result = await useCase.execute({ email, password });
+
+    // Assert
+    expect(result.isSuccess).toBe(true);
+    expect(httpClient.post).toHaveBeenCalledWith("/api/users/register", {
+      email,
+      password,
+    });
+    expect(authService.storeToken).toHaveBeenCalledWith("mock-token");
+
+    const userData = result.getValue();
+    expect(userData.email).toBe(email);
+    expect(userData.id).toBe(1);
+  });
+  ```
+
+## Hook Testing Example
+
+For custom hooks, use React Testing Library's `renderHook`:
 
 ```typescript
-import { renderHook, act } from "@testing-library/react";
-import { useRegistration } from "../useRegistration";
-import { RegisterUserUseCase } from "../../application/RegisterUserUseCase";
-import { AuthServiceAdapter } from "../../services/AuthServiceAdapter";
-import { UserRepository } from "../../interfaces/UserRepository";
-import { User } from "../../types/User";
+it("should handle login success", async () => {
+  // Arrange
+  const mockHttpClient = {
+    post: jest.fn().mockResolvedValue({
+      data: { token: "mock-token", user: { id: 1, email: "test@example.com" } },
+      status: 200,
+    }),
+  };
+  const mockAuthService = {
+    storeToken: jest.fn(),
+  };
 
-// ARRANGE:
-// 1. Mock the repository (the true boundary)
-const mockUserRepository: jest.Mocked<UserRepository> = {
-  register: jest.fn(),
-};
-
-// 2. Use REAL collaborators for the internal application logic
-const authService = new AuthServiceAdapter(mockUserRepository);
-const registerUserUseCase = new RegisterUserUseCase(authService);
-
-describe("Sociable Unit Test: useRegistration Hook", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  // Act
+  const { result } = renderHook(() => useLogin(mockHttpClient, mockAuthService));
+  await act(async () => {
+    await result.current.login("test@example.com", "password");
   });
 
-  it("should handle successful registration", async () => {
-    // Arrange: Configure the mock's response
-    const mockUser: User = { id: "user-123", name: "John Doe", email: "john@example.com" };
-    mockUserRepository.register.mockResolvedValue(mockUser);
-
-    const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
-
-    // ACT: Call the hook's public function
-    await act(async () => {
-      await result.current.handleSubmit({ name: "John", email: "a@b.com", password: "p" });
-    });
-
-    // ASSERT: Verify the hook's final state and the mock's interaction
-    expect(result.current.isSuccess).toBe(true);
-    expect(result.current.error).toBeNull();
-    expect(mockUserRepository.register).toHaveBeenCalledTimes(1);
+  // Assert
+  expect(result.current.isLoading).toBe(false);
+  expect(result.current.error).toBeNull();
+  expect(mockHttpClient.post).toHaveBeenCalledWith("/api/auth/login", {
+    email: "test@example.com",
+    password: "password",
   });
+  expect(mockAuthService.storeToken).toHaveBeenCalledWith("mock-token");
 });
 ```
 
-## 7. Enforcement
+## Example Implementation
 
-Adherence to the Sociable Unit Test pattern is critical for building a robust and maintainable test suite that provides fast, reliable feedback. Violations will be addressed during code review and may result in build failures. These standards are **non-negotiable**.
+- Sociable Unit Test: `src/features/auth/application/use-cases/register-user/register-user.use-case.test.ts`
+- Hook Sociable Unit Test: `src/features/auth/hooks/useLogin.test.ts`
+
+## Enforcement
+
+Violation of these standards will result in build failures during CI and/or rejection during code review. These standards are non-negotiable to maintain the integrity and effectiveness of our testing suite.
