@@ -8,7 +8,7 @@ alwaysApply: false
 # 🧪 Standard Operating Procedure: Frontend Component Tests
 
 **Status:** Mandatory  
-**Version:** 1.0
+**Version:** 1.1
 
 ---
 
@@ -18,6 +18,7 @@ alwaysApply: false
 2. [Scope](mdc:digital-kudos-wall/#2-scope)
 3. [Definitions](mdc:digital-kudos-wall/#3-definitions)
 4. [Key Principles (Non-Negotiable)](mdc:digital-kudos-wall/#4-key-principles-non-negotiable)
+   - 4.4. [Test State, Not Interactions (Critical)](mdc:digital-kudos-wall/#44-test-state-not-interactions-critical)
 5. [Page Object Pattern (Mandatory)](mdc:digital-kudos-wall/#5-page-object-pattern-mandatory)
 6. [Test Structure (Arrange-Act-Assert)](mdc:digital-kudos-wall/#6-test-structure-arrange-act-assert)
 7. [What NOT to Test (Implementation Details)](mdc:digital-kudos-wall/#7-what-not-to-test-implementation-details)
@@ -135,7 +136,78 @@ expect(container.querySelector(".form-field")).toBeRequired();
 expect(wrapper.find("input[type='email']")).toHaveLength(1);
 ```
 
-### 4.4. Speed and Determinism
+### 4.4. Test State, Not Interactions (Critical)
+
+- **Standard:** Tests MUST verify observable component state and behavior, NOT internal interactions or function call counts.
+- **Rationale:** Testing interactions makes tests brittle and couples them to implementation details. State-focused tests remain valid even when implementation changes.
+- **Focus:** Test what users see and experience, not how the component achieves that behavior internally.
+
+**✅ CORRECT Examples (State-Focused):**
+
+```typescript
+// Test observable state changes
+✅ expect(page.isSubmitButtonDisabled()).toBe(true);
+✅ expect(page.getSubmitButtonText()).toMatch(/processing/i);
+✅ page.shouldShowError("Registration failed");
+✅ expect(page.getNameFieldValue()).toBe("John Doe");
+✅ page.shouldBeInLoadingState();
+
+// Test component state rendering
+✅ expect(page.isInRegistrationMode()).toBe(true);
+✅ page.shouldShowRegistrationFields();
+✅ page.shouldNotShowError();
+```
+
+**❌ INCORRECT Examples (Interaction-Focused):**
+
+```typescript
+// Testing function call counts (brittle)
+❌ expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+❌ expect(mockNameChange).toHaveBeenCalledTimes(1);
+❌ expect(mockEmailChange).toHaveBeenCalledWith(expect.any(Object));
+❌ expect(mockOnSubmit).not.toHaveBeenCalled();
+
+// Testing implementation details
+❌ expect(mockCallback).toHaveBeenCalledWith(expectedArgs);
+❌ verify(mockService).wasCalledWith(parameters);
+```
+
+**Refactoring Example:**
+
+```typescript
+// ❌ BEFORE: Testing interactions
+test("should handle form submission", () => {
+  const mockOnSubmit = jest.fn();
+  const { page } = renderComponent({ onSubmit: mockOnSubmit });
+
+  page.submitForm();
+
+  expect(mockOnSubmit).toHaveBeenCalledTimes(1); // ❌ Testing interaction
+});
+
+// ✅ AFTER: Testing state
+test("should enable form submission when not loading", () => {
+  const { page } = renderComponent();
+
+  expect(page.isSubmitButtonDisabled()).toBe(false); // ✅ Testing state
+});
+
+test("should display disabled state when loading", () => {
+  const { page } = renderComponent({ isLoading: true });
+
+  expect(page.isSubmitButtonDisabled()).toBe(true); // ✅ Testing state
+  page.shouldBeInLoadingState(); // ✅ Testing state
+});
+```
+
+**Key Benefits:**
+
+- **Resilient:** Tests survive implementation changes
+- **User-Focused:** Tests verify what users actually experience
+- **Maintainable:** Less coupling to internal component mechanics
+- **Clear Intent:** Tests document expected behavior, not implementation
+
+### 4.5. Speed and Determinism
 
 - **Standard:** Component Tests MUST be fast (< 2 seconds total execution) and deterministic.
 - **Rationale:** Fast tests provide immediate feedback during development, supporting rapid iteration.
@@ -335,27 +407,31 @@ This SOP directly implements the Modern Test Pyramid principles:
 ✅ "should display loading states"
 ```
 
-### 9.2. User Interactions (Test User Actions)
+### 9.2. User Interactions (Test State Changes from User Actions)
 
 ```typescript
-✅ "should handle form submission"
-✅ "should handle field changes"
-✅ "should handle button clicks"
-✅ "should handle keyboard navigation"
+✅ "should enable form submission when not loading"
+✅ "should reflect field value changes in form state"
+✅ "should display correct form structure for registration flow"
+✅ "should display correct form structure for login flow"
+✅ "should show validation errors when fields are invalid"
 ```
 
-### 9.3. Component Communication (Test Parent-Child Communication)
+### 9.3. Component State Management (Test State Transitions)
 
 ```typescript
-✅ "should prevent submission when disabled"
-✅ "should handle state transitions correctly"
-✅ "should render with controlled form values"
-✅ "should call parent callbacks with correct parameters"
+✅ "should display disabled state when loading"
+✅ "should display error state when error is present"
+✅ "should display controlled form values correctly"
+✅ "should display different states in different modes"
+✅ "should transition from error to loading state correctly"
 ```
 
 ## 10. Forbidden Test Types
 
 The following test types are **EXPLICITLY FORBIDDEN** as they violate Modern Test Pyramid principles:
+
+### 10.1. Implementation Detail Testing
 
 ```typescript
 ❌ "should have proper input types"
@@ -367,6 +443,21 @@ The following test types are **EXPLICITLY FORBIDDEN** as they violate Modern Tes
 ❌ "should have proper ARIA labels"
 ❌ "should match snapshot" (for structural testing)
 ```
+
+### 10.2. Interaction Testing (Mock Call Verification)
+
+```typescript
+❌ expect(mockOnSubmit).toHaveBeenCalledTimes(1)
+❌ expect(mockOnChange).toHaveBeenCalledWith(expectedValue)
+❌ expect(mockCallback).not.toHaveBeenCalled()
+❌ expect(mockHandler).toHaveBeenCalledBefore(mockOtherHandler)
+❌ verify(mockService).wasCalledWith(parameters)
+❌ "should call onChange handler when field changes"
+❌ "should call onSubmit when form is submitted"
+❌ "should not call callback when disabled"
+```
+
+**Rationale:** These tests couple to implementation details and break when refactoring, even when user-facing behavior remains identical. Use state verification instead.
 
 ## 11. Tools and Setup
 

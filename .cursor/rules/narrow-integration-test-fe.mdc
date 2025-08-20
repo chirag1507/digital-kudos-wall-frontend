@@ -1,0 +1,98 @@
+---
+description: Enforce non-negotiable standards for narrow integration tests in the Digital Kudos Wall Frontend project.
+globs:
+  - "digital-kudos-wall-frontend/src/**/*"
+alwaysApply: false
+---
+
+# 🧪 Standard Operating Procedure: Narrow Integration Tests
+
+**Status:** Mandatory  
+**Version:** 1.0
+
+**NON-NEGOTIABLE STANDARD:** Adherence to this SOP is mandatory for all Narrow Integration Tests. Deviations are not permitted without explicit architectural review and approval.
+
+## 📌 Purpose
+
+This SOP defines the standards for writing Narrow Integration Tests for the application layer of the Digital Kudos Wall frontend. Its primary goal is to ensure that our **custom hooks** are tested effectively, verifying their state management and integration with the application's core logic (Use Cases).
+
+---
+
+## Scope
+
+This standard applies exclusively to tests for **custom hook files** located in `src/features/{feature-name}/hooks/`.
+
+## Definitions
+
+- **Narrow Integration Test:** A test that verifies the correct integration of a vertical slice of the application, from the UI-facing hook down to the mocked I/O boundary. It ensures the "plumbing" between the hook (Interface Adapter) and the Use Case (Application Logic) is correct.
+
+## Key Principles (Non-Negotiable)
+
+- **Focus on State Management:** Tests MUST verify the state changes of the hook (`isLoading`, `error`, `isSuccess`, `data`). The primary goal is to confirm the hook correctly reflects the status of the underlying asynchronous operation.
+- **Real Collaborators:** The test MUST use a **real Use Case instance** and its real dependencies, down to the I/O boundary. This is critical to ensure the integration is tested properly.
+- **Test Doubles for I/O:** The I/O boundary (e.g., `HttpClient`, `AuthService`) MUST be mocked to ensure tests are fast, deterministic, and isolated from external infrastructure.
+
+## Test Structure (Arrange-Act-Assert)
+
+All tests MUST use `@testing-library/react`'s `renderHook` and follow the AAA pattern to test the hook's lifecycle and state transitions.
+
+```typescript
+// Example: src/features/auth/hooks/useRegistration.integration.test.ts
+import { renderHook, act } from "@testing-library/react";
+import { useRegistration } from "./useRegistration";
+import { RegisterUserUseCase } from "../application/use-cases/register-user/RegisterUserUseCase";
+// ... other imports for real collaborators and mocked boundaries
+
+describe("Narrow Integration Test: useRegistration Hook", () => {
+  let registerUserUseCase: RegisterUserUseCase;
+  let mockHttpClient: jest.Mocked<HttpClient>;
+  // ... other setup for real collaborators
+
+  beforeEach(() => {
+    // 1. Mock the I/O Boundary
+    mockHttpClient = { post: jest.fn(), get: jest.fn() };
+
+    // 2. Compose real collaborators
+    const userRepository = new UserRepository(mockHttpClient);
+    const authService = new AuthServiceAdapter(userRepository);
+    registerUserUseCase = new RegisterUserUseCase(authService);
+  });
+
+  it("should transition through loading and success states correctly", async () => {
+    // Arrange
+    const payload = { name: "Jane Doe", email: "jane@example.com", password: "Password123!" };
+    mockHttpClient.post.mockResolvedValue({ id: "user-123", ...payload });
+
+    const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
+
+    // Act: Trigger the hook's async operation
+    let promise;
+    act(() => {
+      promise = result.current.handleSubmit(payload);
+    });
+
+    // Assert: Loading State
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.error).toBeNull();
+    expect(result.current.isSuccess).toBe(false);
+
+    // Act: Wait for completion
+    await act(async () => {
+      await promise;
+    });
+
+    // Assert: Final Success State
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.isSuccess).toBe(true);
+    expect(result.current.error).toBeNull();
+  });
+});
+```
+
+## Example Implementation
+
+- **Canonical Example:** `src/features/auth/hooks/useLogin.integration.test.ts`
+
+## Enforcement
+
+Violation of these standards will result in build failures during CI and/or rejection during code review. These standards are non-negotiable to maintain the integrity and effectiveness of our testing suite.

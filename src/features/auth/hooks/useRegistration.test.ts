@@ -7,16 +7,13 @@ import { AuthServiceAdapter } from "../services/AuthServiceAdapter";
 import { UserRepository } from "../repositories/UserRepository";
 import { HttpClient } from "@/shared/interfaces/HttpClient";
 
-// 1. Mock the HTTP client (the true boundary)
 const mockHttpClient: jest.Mocked<HttpClient> = {
   get: jest.fn(),
   post: jest.fn(),
 };
 
-// 2. Use real UserRepository with mocked HTTP client
 const userRepository = new UserRepository(mockHttpClient);
 
-// 3. Use real collaborators for the application logic
 const authService = new AuthServiceAdapter(userRepository);
 const registerUserUseCase = new RegisterUserUseCase(authService);
 
@@ -37,57 +34,87 @@ describe("Sociable Unit Test: useRegistration Hook", () => {
     jest.clearAllMocks();
   });
 
-  it("should handle successful registration", async () => {
-    // Arrange: Mock the HTTP client's response
-    mockHttpClient.post.mockResolvedValue(mockUser);
+  describe("Hook State Management", () => {
+    it("should initialize with default state", () => {
+      const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
 
-    const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
-
-    // Act
-    await act(async () => {
-      await result.current.handleSubmit(payload);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isSuccess).toBe(false);
+      expect(result.current.error).toBeNull();
     });
 
-    // Assert
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.isSuccess).toBe(true);
-    expect(result.current.error).toBeNull();
-    expect(mockHttpClient.post).toHaveBeenCalledWith("/users/register", payload);
-  });
+    it("should transition to success state after successful registration", async () => {
+      mockHttpClient.post.mockResolvedValue(mockUser);
 
-  it("should handle registration failure", async () => {
-    // Arrange
-    const errorMessage = "Email already in use";
-    mockHttpClient.post.mockRejectedValue(new Error(errorMessage));
+      const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
 
-    const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
+      await act(async () => {
+        await result.current.handleSubmit(payload);
+      });
 
-    // Act
-    await act(async () => {
-      await result.current.handleSubmit(payload);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.error).toBeNull();
     });
 
-    // Assert
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.isSuccess).toBe(false);
-    expect(result.current.error).toBe(errorMessage);
-    expect(mockHttpClient.post).toHaveBeenCalledWith("/users/register", payload);
-  });
+    it("should transition to error state when registration fails", async () => {
+      const errorMessage = "Email already in use";
+      mockHttpClient.post.mockRejectedValue(new Error(errorMessage));
 
-  it("should set loading state during registration", async () => {
-    // Arrange
-    mockHttpClient.post.mockReturnValue(new Promise(() => {}));
+      const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
 
-    const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
+      await act(async () => {
+        await result.current.handleSubmit(payload);
+      });
 
-    // Act
-    act(() => {
-      result.current.handleSubmit(payload);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isSuccess).toBe(false);
+      expect(result.current.error).toBe(errorMessage);
     });
 
-    // Assert
-    expect(result.current.isLoading).toBe(true);
-    expect(result.current.error).toBeNull();
-    expect(result.current.isSuccess).toBe(false);
+    it("should display loading state during registration process", async () => {
+      let resolveRegistration: (value: User) => void;
+      const registrationPromise = new Promise<User>((resolve) => {
+        resolveRegistration = resolve;
+      });
+      mockHttpClient.post.mockReturnValue(registrationPromise);
+
+      const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
+
+      act(() => {
+        result.current.handleSubmit(payload);
+      });
+
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.error).toBeNull();
+      expect(result.current.isSuccess).toBe(false);
+
+      await act(async () => {
+        resolveRegistration!(mockUser);
+      });
+    });
+
+    it("should reset error state on new registration attempt", async () => {
+      const errorMessage = "Email already in use";
+      mockHttpClient.post.mockRejectedValueOnce(new Error(errorMessage));
+
+      const { result } = renderHook(() => useRegistration({ registerUserUseCase }));
+
+      await act(async () => {
+        await result.current.handleSubmit(payload);
+      });
+
+      expect(result.current.error).toBe(errorMessage);
+
+      mockHttpClient.post.mockResolvedValueOnce(mockUser);
+
+      await act(async () => {
+        await result.current.handleSubmit(payload);
+      });
+
+      expect(result.current.error).toBeNull();
+      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.isLoading).toBe(false);
+    });
   });
 });

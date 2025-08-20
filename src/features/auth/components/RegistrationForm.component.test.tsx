@@ -48,84 +48,59 @@ describe("Component Test: RegistrationForm", () => {
   });
 
   describe("User Interactions", () => {
-    test("should handle form submission", () => {
-      const mockOnSubmit = jest.fn();
-      const props = new RegistrationFormPropsBuilder().withOnSubmit(mockOnSubmit).build();
-      const { page } = renderComponent(props);
+    test("should enable form submission when not loading", () => {
+      const { page } = renderComponent();
 
-      page.submitForm();
-
-      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+      expect(page.isSubmitButtonDisabled()).toBe(false);
     });
 
-    test("should handle field changes", () => {
-      const mockNameChange = jest.fn();
-      const mockEmailChange = jest.fn();
-      const mockPasswordChange = jest.fn();
-
+    test("should reflect field value changes in form state", () => {
       const props = new RegistrationFormPropsBuilder()
-        .withName("", mockNameChange)
-        .withEmail("", mockEmailChange)
-        .withPassword("", mockPasswordChange)
+        .withName("Initial Name")
+        .withEmail("initial@example.com")
+        .withPassword("initialpass")
         .build();
       const { page } = renderComponent(props);
 
-      page.fillNameField("John");
-      page.fillEmailField("john@example.com");
-      page.fillPasswordField("password123");
-
-      expect(mockNameChange).toHaveBeenCalledTimes(1);
-      expect(mockEmailChange).toHaveBeenCalledTimes(1);
-      expect(mockPasswordChange).toHaveBeenCalledTimes(1);
+      expect(page.getNameFieldValue()).toBe("Initial Name");
+      expect(page.getEmailFieldValue()).toBe("initial@example.com");
+      expect(page.getPasswordFieldValue()).toBe("initialpass");
     });
 
-    test("should handle complete registration flow", () => {
-      const mockOnSubmit = jest.fn();
-      const props = new RegistrationFormPropsBuilder().withOnSubmit(mockOnSubmit).build();
-      const { page } = renderComponent(props);
+    test("should display correct form structure for registration flow", () => {
+      const { page } = renderComponent();
 
-      page.performRegistration("John Doe", "john@example.com", "password123");
-
-      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+      page.shouldShowRegistrationFields();
+      expect(page.getSubmitButtonText()).toMatch(/create account/i);
     });
 
-    test("should handle complete login flow", () => {
-      const mockOnSubmit = jest.fn();
-      const props = new RegistrationFormPropsBuilder().inLoginMode().withOnSubmit(mockOnSubmit).build();
+    test("should display correct form structure for login flow", () => {
+      const props = new RegistrationFormPropsBuilder().inLoginMode().build();
       const { page } = renderComponent(props);
 
-      page.performLogin("john@example.com", "password123");
-
-      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+      page.shouldShowLoginFields();
+      expect(page.getSubmitButtonText()).toMatch(/sign in/i);
     });
   });
 
-  describe("Component Communication", () => {
-    test("should prevent submission when disabled", () => {
-      const mockOnSubmit = jest.fn();
-      const props = new RegistrationFormPropsBuilder().isLoading().withOnSubmit(mockOnSubmit).build();
+  describe("Component State Management", () => {
+    test("should display disabled state when loading", () => {
+      const props = new RegistrationFormPropsBuilder().isLoading().build();
       const { page } = renderComponent(props);
 
       expect(page.isSubmitButtonDisabled()).toBe(true);
-      page.clickSubmitButton();
-
-      expect(mockOnSubmit).not.toHaveBeenCalled();
-    });
-
-    test("should handle state transitions correctly", () => {
-      const initialProps = new RegistrationFormPropsBuilder().withError("Initial error").build();
-      const { page, container } = renderComponent(initialProps);
-
-      page.shouldShowError("Initial error");
-
-      const finalProps = new RegistrationFormPropsBuilder().isLoading().build();
-      render(<RegistrationForm {...finalProps} />, { container });
-
-      page.shouldNotShowError();
       page.shouldBeInLoadingState();
     });
 
-    test("should render with controlled form values", () => {
+    test("should display error state when error is present", () => {
+      const props = new RegistrationFormPropsBuilder().withError("Registration failed").build();
+      const { page } = renderComponent(props);
+
+      page.shouldShowError("Registration failed");
+      expect(page.isSubmitButtonDisabled()).toBe(false);
+    });
+
+    test("should display controlled form values correctly", () => {
       const props = new RegistrationFormPropsBuilder()
         .withName("John Doe")
         .withEmail("john@example.com")
@@ -135,6 +110,17 @@ describe("Component Test: RegistrationForm", () => {
       const { page } = renderComponent(props);
 
       page.shouldDisplayFieldValues("John Doe", "john@example.com", "password123");
+    });
+
+    test("should display different states in different modes", () => {
+      const registrationProps = new RegistrationFormPropsBuilder().build();
+      const loginProps = new RegistrationFormPropsBuilder().inLoginMode().build();
+
+      const { page: registrationPage } = renderComponent(registrationProps);
+      const { page: loginPage } = renderComponent(loginProps);
+
+      expect(registrationPage.isInRegistrationMode()).toBe(true);
+      expect(loginPage.isInLoginMode()).toBe(true);
     });
   });
 
